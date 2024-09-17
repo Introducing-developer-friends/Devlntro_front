@@ -1,21 +1,27 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import NavBar from "./components/NavBar";
+import LoginPage from "./pages/LoginPage";
+import SignUpPage from "./pages/SignUpPage";
+import FeedPage from "./pages/FeedPage";
+import FriendsPage from "./pages/FriendsPage";
+import MyPage from "./pages/MyPage";
 import "./App.css";
 
 function App() {
-  const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    axios
-      .get("http://localhost:3000")
-      .then((response) => setMessage(response.data))
-      .catch((error) => console.error("Error:", error));
-  }, []);
 
   return (
-    <div className="App">
-      <h1>{message}</h1>
-    </div>
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/feed" element={<FeedPage />} />
+          <Route path="/friends" element={<FriendsPage />} />
+          <Route path="/mypage" element={<MyPage />} />
+        </Routes>
+        <NavBar />
+      </div>
+    </Router>
   );
 }
 
