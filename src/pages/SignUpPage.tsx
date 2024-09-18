@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import "./SignUpPage.css";
 
 const SignUpPage: React.FC = () => {
   const [username, setUsername] = useState("");
@@ -56,6 +57,7 @@ const SignUpPage: React.FC = () => {
           <label>사용자 이름:</label>
           <input
             type="text"
+            className="sign-up-input"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
@@ -64,17 +66,23 @@ const SignUpPage: React.FC = () => {
           <label>아이디:</label>
           <input
             type="text"
+            className="sign-up-input"
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
             onBlur={checkIdDuplication}
           />
-          {idAvailable === false && <p style={{ color: "red" }}>아이디가 이미 존재합니다.</p>}
-          {idAvailable === true && <p style={{ color: "green" }}>사용 가능한 아이디입니다.</p>}
+          {idAvailable === false && (
+            <p className="form-error">아이디가 이미 존재합니다.</p>
+          )}
+          {idAvailable === true && (
+            <p className="success-message">사용 가능한 아이디입니다.</p>
+          )}
         </div>
         <div>
           <label>비밀번호:</label>
           <input
             type="password"
+            className="sign-up-input"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -83,6 +91,7 @@ const SignUpPage: React.FC = () => {
           <label>비밀번호 확인:</label>
           <input
             type="password"
+            className="sign-up-input"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
@@ -92,6 +101,7 @@ const SignUpPage: React.FC = () => {
           <label>회사명:</label>
           <input
             type="text"
+            className="sign-up-input"
             value={company}
             onChange={(e) => setCompany(e.target.value)}
           />
@@ -100,6 +110,7 @@ const SignUpPage: React.FC = () => {
           <label>부서:</label>
           <input
             type="text"
+            className="sign-up-input"
             value={department}
             onChange={(e) => setDepartment(e.target.value)}
           />
@@ -108,6 +119,7 @@ const SignUpPage: React.FC = () => {
           <label>직급:</label>
           <input
             type="text"
+            className="sign-up-input"
             value={position}
             onChange={(e) => setPosition(e.target.value)}
           />
@@ -116,6 +128,7 @@ const SignUpPage: React.FC = () => {
           <label>이메일:</label>
           <input
             type="email"
+            className="sign-up-input"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -124,15 +137,17 @@ const SignUpPage: React.FC = () => {
           <label>연락처:</label>
           <input
             type="tel"
+            className="sign-up-input"
             value={contact}
             onChange={(e) => setContact(e.target.value)}
           />
         </div>
-        {formError && <p style={{ color: "red" }}>{formError}</p>}
-        <button type="button" onClick={handleSignUp}>
+        {formError && <p className="form-error">{formError}</p>}
+        <button type="button" className="sign-up-button" onClick={handleSignUp}>
           회원가입
         </button>
       </form>
+      <div className="nav-spacer"></div>
     </div>
   );
 };
