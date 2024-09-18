@@ -4,6 +4,7 @@ import SignUpPage from "./pages/SignUpPage";
 import FeedPage from "./pages/FeedPage";
 import FriendsPage from "./pages/FriendsPage";
 import MyPage from "./pages/MyPage";
+import NavBar from './components/NavBar';
 import "./App.css";
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
           <Route path="/friends" element={<FriendsPage />} />
           <Route path="/mypage" element={<MyPage />} />
         </Routes>
+        <NavBar/>
       </div>
     </Router>
   );
