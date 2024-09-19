@@ -1,0 +1,23 @@
+/* FriendsPage.css */
+
+.contacts-list {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .contact-item {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 10px 0;
+    background-color: #f9f9f9;
+  }
+  
+  .error-message {
+    color: red;
+  }
+  
+  .contact-item p {
+    margin: 5px 0;
+  }
+  
