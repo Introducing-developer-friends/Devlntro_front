@@ -6,6 +6,7 @@ import FriendsPage from "./pages/FriendsPage";
 import MyPage from "./pages/MyPage";
 import NavBar from './components/NavBar';
 import "./App.css";
+import CreatePostPage from "./pages/CreatePostPage";
 
 function App() {
 
@@ -18,6 +19,7 @@ function App() {
           <Route path="/feed" element={<FeedPage />} />
           <Route path="/friends" element={<FriendsPage />} />
           <Route path="/mypage" element={<MyPage />} />
+          <Route path="/create-post" element={<CreatePostPage />} />
         </Routes>
         <NavBar/>
       </div>
