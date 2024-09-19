@@ -11,7 +11,7 @@ const SignUpPage: React.FC = () => {
   const [department, setDepartment] = useState("");
   const [position, setPosition] = useState("");
   const [email, setEmail] = useState("");
-  const [contact, setContact] = useState("");
+  const [phone, setPhone] = useState("");
   const [idAvailable, setIdAvailable] = useState<boolean | null>(null);
   const [formError, setFormError] = useState("");
 
@@ -39,7 +39,7 @@ const SignUpPage: React.FC = () => {
         department,
         position,
         email,
-        contact,
+        phone,
       };
       await axios.post("/api/signup", signUpData);
       alert("Sign-up successful!");
@@ -138,8 +138,8 @@ const SignUpPage: React.FC = () => {
           <input
             type="tel"
             className="sign-up-input"
-            value={contact}
-            onChange={(e) => setContact(e.target.value)}
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
           />
         </div>
         {formError && <p className="form-error">{formError}</p>}
