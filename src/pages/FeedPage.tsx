@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import './FeedPage.css'; // 스타일링을 위한 CSS 파일
+import './FeedPage.css';
+import FeedDetail from '../components/FeedDetail'; // 모달 컴포넌트 임포트
 
 interface Post {
   postId: number;
@@ -13,7 +14,9 @@ interface Post {
 
 const FeedPage: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -32,6 +35,16 @@ const FeedPage: React.FC = () => {
     fetchPosts();
   }, []);
 
+  const handlePostClick = (postId: number) => {
+    setSelectedPostId(postId);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedPostId(null); // 모달을 닫을 때 데이터 초기화
+  };
+
   if (error) {
     return <div>{error}</div>;
   }
@@ -41,7 +54,11 @@ const FeedPage: React.FC = () => {
       <h1>게시물 피드</h1>
       <div className="posts-wrapper">
         {posts.map((post) => (
-          <div key={post.postId} className="post-card">
+          <div
+            key={post.postId}
+            className="post-card"
+            onClick={() => handlePostClick(post.postId)}
+          >
             <img src={post.imageUrl} alt="Post" className="post-image" />
             <div className="post-info">
               <p>{post.createrName}</p>
@@ -50,6 +67,10 @@ const FeedPage: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {isModalOpen && selectedPostId && (
+        <FeedDetail postId={selectedPostId} onClose={handleCloseModal} />
+      )}
     </div>
   );
 };
