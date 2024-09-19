@@ -1,38 +1,62 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import './CreatePostPage.css'; // 스타일링 파일
+import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import "./CreatePostPage.css"; // 스타일링 파일
 
 const CreatePostPage: React.FC = () => {
-  const [content, setContent] = useState<string>('');
-  const [imageUrl, setImageUrl] = useState<string>('');
+  const [content, setContent] = useState<string>("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setImageFile(event.target.files[0]);
+    }
+  };
+
   const handlePostCreation = async () => {
-    if (!content || !imageUrl) {
-      setError('내용과 이미지 URL을 입력해주세요.');
+    if (!content || !imageFile) {
+      setError("내용과 이미지를 업로드해주세요.");
       return;
     }
 
     try {
-      const response = await axios.post(
-        '/api/posts',
-        {
-          content,
-          imageUrl,
+      // 이미지 업로드
+      const formData = new FormData();
+      formData.append("file", imageFile);
+
+      const uploadResponse = await axios.post("/api/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('JWT_TOKEN')}`,
+      });
+
+      if (uploadResponse.status === 200) {
+        setImageUrl(uploadResponse.data.imageUrl);
+
+        // 게시물 작성
+        const postResponse = await axios.post(
+          "/api/posts",
+          {
+            content,
+            imageUrl: uploadResponse.data.imageUrl,
           },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+            },
+          }
+        );
+
+        if (postResponse.status === 201) {
+          navigate("/"); // 성공적으로 작성 후 피드 페이지로 이동
         }
-      );
-      if (response.status === 201) {
-        navigate('/'); // 성공적으로 작성 후 피드 페이지로 이동
       }
     } catch (error) {
-      setError('게시물 작성에 실패했습니다. 다시 시도해주세요.');
+      setError("게시물 작성에 실패했습니다. 다시 시도해주세요.");
     }
   };
 
@@ -47,11 +71,10 @@ const CreatePostPage: React.FC = () => {
         className="post-content"
       />
       <input
-        type="text"
-        placeholder="이미지 URL을 입력하세요"
-        value={imageUrl}
-        onChange={(e) => setImageUrl(e.target.value)}
-        className="post-image-url"
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="post-image-upload"
       />
       <button onClick={handlePostCreation} className="submit-button">
         게시물 작성
