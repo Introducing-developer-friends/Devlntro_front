@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axiosInstance from "../api/axiosInstance";
 import { useNavigate } from "react-router-dom";
 import "./FeedPage.css";
 import FeedDetail from "../components/FeedDetail"; // 모달 컴포넌트
@@ -23,7 +23,7 @@ const FeedPage: React.FC = () => {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await axios.get("/posts?filter=all&sort=latest", {
+        const response = await axiosInstance.get("/posts?filter=all&sort=latest", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
           },
@@ -64,24 +64,24 @@ const FeedPage: React.FC = () => {
         게시물 작성
       </button>
       <div className="posts-wrapper">
-        {posts && posts.length > 0 ? (
-          posts.map((post) => (
-            <div
-              key={post.postId}
-              className="post-card"
-              onClick={() => handlePostClick(post.postId)}
-            >
-              <img src={post.imageUrl} alt="Post" className="post-image" />
-              <div className="post-info">
-                <p>{post.createrName}</p>
-                <p>{new Date(post.createdAt).toLocaleDateString()}</p>
-              </div>
+        {posts.map((post) => (
+          <div
+            key={post.postId}
+            className="post-card"
+            onClick={() => handlePostClick(post.postId)}
+          >
+            <img src={post.imageUrl} alt="Post" className="post-image" />
+            <div className="post-info">
+              <p>{post.createrName}</p>
+              <p>{new Date(post.createdAt).toLocaleDateString()}</p>
             </div>
-          ))
-        ) : (
-          <p>게시물이 없습니다.</p> // 게시물이 없을 때의 처리
-        )}
+          </div>
+        ))}
       </div>
+
+      {isModalOpen && selectedPostId && (
+        <FeedDetail postId={selectedPostId} onClose={handleCloseModal} />
+      )}
     </div>
   );
 };

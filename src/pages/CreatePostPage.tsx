@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import axiosInstance from "../api/axiosInstance";
 import { useNavigate } from "react-router-dom";
 import "./CreatePostPage.css"; // 스타일링 파일
 
@@ -27,7 +27,7 @@ const CreatePostPage: React.FC = () => {
       const formData = new FormData();
       formData.append("file", imageFile);
 
-      const uploadResponse = await axios.post("/api/upload", formData, {
+      const uploadResponse = await axiosInstance.post("/upload", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
@@ -38,7 +38,7 @@ const CreatePostPage: React.FC = () => {
         setImageUrl(uploadResponse.data.imageUrl);
 
         // 게시물 작성
-        const postResponse = await axios.post(
+        const postResponse = await axiosInstance.post(
           "/api/posts",
           {
             content,
