@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { login, logout } from "../redux/userSlice";
 import { RootState, AppDispatch } from "../redux/store";
 import { Link, useNavigate } from "react-router-dom";
+import axiosInstance from "../api/axiosInstance";
 import axios, { AxiosError } from "axios";
 import "./LoginPage.css"; // Import the CSS file
 
@@ -17,9 +18,10 @@ const LoginPage: React.FC = () => {
   );
 
   const handleLogin = async () => {
-    // Add async here
+    console.log("id : ", {loginId})
+    console.log("pw : ", {password})
     try {
-      const response = await axios.post("/api/auth/login", {
+      const response = await axiosInstance.post("/auth/login", {
         login_id: loginId,
         password: password,
       });

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import axios from "axios";
+import axiosInstance from "../api/axiosInstance";
+import { useNavigate } from "react-router-dom";
 import "./SignUpPage.css";
 
 const SignUpPage: React.FC = () => {
@@ -15,9 +16,11 @@ const SignUpPage: React.FC = () => {
   const [idAvailable, setIdAvailable] = useState<boolean | null>(null);
   const [formError, setFormError] = useState("");
 
+  const navigate = useNavigate(); // Create a history instance
+
   const checkIdDuplication = async () => {
     try {
-      const response = await axios.post("/api/check-id", { userId });
+      const response = await axiosInstance.get(`/auth/check-id/${userId}`);
       setIdAvailable(response.data.available);
     } catch (error) {
       console.error("Error checking ID duplication:", error);
@@ -32,17 +35,18 @@ const SignUpPage: React.FC = () => {
 
     try {
       const signUpData = {
-        username,
-        userId,
+        login_id: userId,
         password,
+        name: username,
         company,
         department,
         position,
         email,
         phone,
       };
-      await axios.post("/api/signup", signUpData);
+      await axiosInstance.post("/auth/register", signUpData);
       alert("Sign-up successful!");
+      navigate("/login");
     } catch (error) {
       console.error("Error during sign-up:", error);
       setFormError("Sign-up failed. Please try again.");

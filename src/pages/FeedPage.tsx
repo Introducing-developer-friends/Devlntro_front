@@ -23,14 +23,16 @@ const FeedPage: React.FC = () => {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await axios.get("/api/posts?filter=all&sort=latest", {
+        const response = await axios.get("/posts?filter=all&sort=latest", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
           },
         });
+        console.log("Fetched posts:", response.data.posts); // 로그 추가
         setPosts(response.data.posts);
       } catch (error) {
         setError("게시물을 불러오는 중 문제가 발생했습니다.");
+        console.error("Error fetching posts:", error); // 오류 로그 추가
       }
     };
 
@@ -62,24 +64,24 @@ const FeedPage: React.FC = () => {
         게시물 작성
       </button>
       <div className="posts-wrapper">
-        {posts.map((post) => (
-          <div
-            key={post.postId}
-            className="post-card"
-            onClick={() => handlePostClick(post.postId)}
-          >
-            <img src={post.imageUrl} alt="Post" className="post-image" />
-            <div className="post-info">
-              <p>{post.createrName}</p>
-              <p>{new Date(post.createdAt).toLocaleDateString()}</p>
+        {posts && posts.length > 0 ? (
+          posts.map((post) => (
+            <div
+              key={post.postId}
+              className="post-card"
+              onClick={() => handlePostClick(post.postId)}
+            >
+              <img src={post.imageUrl} alt="Post" className="post-image" />
+              <div className="post-info">
+                <p>{post.createrName}</p>
+                <p>{new Date(post.createdAt).toLocaleDateString()}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <p>게시물이 없습니다.</p> // 게시물이 없을 때의 처리
+        )}
       </div>
-
-      {isModalOpen && selectedPostId && (
-        <FeedDetail postId={selectedPostId} onClose={handleCloseModal} />
-      )}
     </div>
   );
 };
