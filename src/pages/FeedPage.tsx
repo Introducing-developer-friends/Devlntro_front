@@ -23,11 +23,14 @@ const FeedPage: React.FC = () => {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await axiosInstance.get("/posts?filter=all&sort=latest", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
-          },
-        });
+        const response = await axiosInstance.get(
+          "/posts?filter=all&sort=latest",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+            },
+          }
+        );
         console.log("Fetched posts:", response.data.posts); // 로그 추가
         setPosts(response.data.posts);
       } catch (error) {
@@ -70,7 +73,13 @@ const FeedPage: React.FC = () => {
             className="post-card"
             onClick={() => handlePostClick(post.postId)}
           >
-            <img src={post.imageUrl} alt="Post" className="post-image" />
+            <img
+              src={`http://localhost:3000/posts/images/${post.imageUrl
+                .replace(/\\/g, "/")
+                .replace(/^uploads\//, "")}`}
+              alt="Post"
+              className="post-image"
+            />
             <div className="post-info">
               <p>{post.createrName}</p>
               <p>{new Date(post.createdAt).toLocaleDateString()}</p>

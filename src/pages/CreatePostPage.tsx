@@ -6,7 +6,6 @@ import "./CreatePostPage.css"; // 스타일링 파일
 const CreatePostPage: React.FC = () => {
   const [content, setContent] = useState<string>("");
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imageUrl, setImageUrl] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -23,37 +22,21 @@ const CreatePostPage: React.FC = () => {
     }
 
     try {
-      // 이미지 업로드
+      // 이미지 및 내용 추가
       const formData = new FormData();
-      formData.append("file", imageFile);
+      formData.append("image", imageFile);
+      formData.append("content", content);
 
-      const uploadResponse = await axiosInstance.post("/upload", formData, {
+      // 서버로 게시물 작성 및 이미지 업로드 요청
+      const response = await axiosInstance.post("/posts", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
         },
       });
 
-      if (uploadResponse.status === 200) {
-        setImageUrl(uploadResponse.data.imageUrl);
-
-        // 게시물 작성
-        const postResponse = await axiosInstance.post(
-          "/api/posts",
-          {
-            content,
-            imageUrl: uploadResponse.data.imageUrl,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
-            },
-          }
-        );
-
-        if (postResponse.status === 201) {
-          navigate("/"); // 성공적으로 작성 후 피드 페이지로 이동
-        }
+      if (response.status === 201) {
+          navigate("/feed"); // 성공적으로 작성 후 피드 페이지로 이동
       }
     } catch (error) {
       setError("게시물 작성에 실패했습니다. 다시 시도해주세요.");
