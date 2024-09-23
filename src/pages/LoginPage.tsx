@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { login, logout } from "../redux/userSlice";
 import { RootState, AppDispatch } from "../redux/store";
@@ -10,6 +10,7 @@ import "./LoginPage.css"; // Import the CSS file
 const LoginPage: React.FC = () => {
   const [loginId, setLoginId] = useState(""); // 로그인 시 입력하는 id
   const [password, setPassword] = useState(""); // State for password
+  const passwordInputRef = useRef<HTMLInputElement>(null); // password 필드에 접근하기 위한 ref
   const dispatch = useDispatch<AppDispatch>(); // Dispatch with correct type
   const navigate = useNavigate();
 
@@ -49,6 +50,20 @@ const LoginPage: React.FC = () => {
     }
   };
 
+  // 엔터 키를 눌렀을 때 로그인
+  const handleKeyPressForLogin = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      handleLogin();
+    }
+  };
+
+  // 엔터 키를 눌렀을 때 탭 이동
+  const handleKeyPressForTab = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter" && passwordInputRef.current) {
+      passwordInputRef.current.focus();
+    }
+  }
+
   return (
     <div className="login-container">
       <div className="welcome-message">
@@ -70,6 +85,7 @@ const LoginPage: React.FC = () => {
               placeholder="아이디"
               value={loginId}
               onChange={(e) => setLoginId(e.target.value)}
+              onKeyDown={handleKeyPressForTab} // 엔터 키 이벤트 추가
               className="login-input"
             />
             <input
@@ -77,6 +93,8 @@ const LoginPage: React.FC = () => {
               placeholder="비밀번호"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={handleKeyPressForLogin} // 엔터 키 이벤트 추가
+              ref={passwordInputRef}
               className="login-input"
             />
             <button onClick={handleLogin} className="login-button">
