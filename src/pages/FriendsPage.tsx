@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../api/axiosInstance";
+import "./FriendsPage.css";
 
 interface Contact {
   userId: string;
   name: string;
   company: string;
   department: string;
+  position?: string; // 직무
+  email?: string; // 이메일
+  phone?: string; // 전화번호
 }
 
 const FriendsPage: React.FC = () => {
@@ -14,6 +18,8 @@ const FriendsPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false); // 모달 상태
   const [newContactId, setNewContactId] = useState(""); // 추가할 인맥의 ID
   const [addError, setAddError] = useState<string | null>(null); // 인맥 추가 오류 상태
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null); // 선택된 인맥 정보 상태
+  const [detailError, setDetailError] = useState<string | null>(null); // 상세 조회 오류 상태
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -68,14 +74,43 @@ const FriendsPage: React.FC = () => {
     }
   };
 
+  // 상세보기할 인맥 선택
+  const handleSelectContact = async (contact: Contact) => {
+    setSelectedContact(null); // 이전 선택 초기화
+    setDetailError(null); // 오류 초기화
+
+    try {
+      const response = await axiosInstance.get(`/contacts/${contact.userId}`);
+      console.log("Detailed contact info:", response.data);
+      if (response.data && response.data.contact) {
+        setSelectedContact(response.data.contact);
+      }
+    } catch (error: any) {
+      console.error("Error fetching contact details:", error);
+      if (error.response && error.response.status === 400) {
+        setDetailError("유효하지 않은 사용자 ID입니다.");
+      } else if (error.response && error.response.status === 404) {
+        setDetailError("해당 사용자의 명함을 찾을 수 없습니다.");
+      } else {
+        setDetailError("명함 상세 정보를 가져오는 중 오류가 발생했습니다.");
+      }
+    }
+  };
+
   return (
-    <div>
+    <div className="friends-page">
+      {/* 왼쪽: 친구 목록 */}
+      <div className="contacts-list-container">
       <h1>친구 목록</h1>
       {error && <p className="error-message">{error}</p>}
       <ul className="contacts-list">
         {contacts.length > 0 ? (
           contacts.map((contact) => (
-            <li key={contact.userId} className="contact-item">
+              <li
+                key={contact.userId}
+                className="contact-item"
+                onClick={() => handleSelectContact(contact)} // 친구 선택 시 정보 표시
+              >
               <p>
                 <strong>Name:</strong> {contact.name}
               </p>
@@ -114,6 +149,31 @@ const FriendsPage: React.FC = () => {
           </div>
         </div>
       )}
+      </div>
+
+      {/* 오른쪽: 선택된 친구의 정보 */}
+      <div className="business-card-container">
+        {detailError && <p className="error-message">{detailError}</p>}
+        {selectedContact ? (
+          <div className="business-card">
+            <h2>{selectedContact.name}</h2>
+            <p><strong>Company:</strong> {selectedContact.company}</p>
+            <p><strong>Department:</strong> {selectedContact.department}</p>
+            <p><strong>Position:</strong> {selectedContact.position || "N/A"}</p>
+            <p><strong>Email:</strong> {selectedContact.email || "N/A"}</p>
+            <p><strong>Phone:</strong> {selectedContact.phone || "N/A"}</p>
+          </div>
+        ) : (
+          <div className="business-card placeholder">
+            <h2>이름</h2>
+            <p><strong>Company:</strong> 회사명</p>
+            <p><strong>Department:</strong> 부서</p>
+            <p><strong>Position:</strong> 직무</p>
+            <p><strong>Email:</strong> 이메일</p>
+            <p><strong>Phone:</strong> 전화번호</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

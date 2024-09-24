@@ -20,4 +20,64 @@
   .contact-item p {
     margin: 5px 0;
   }
+
+  .friends-page {
+    display: flex;
+    height: 100vh;
+  }
+  
+  .contacts-list-container {
+    flex: 1;
+    padding: 20px;
+    border-right: 1px solid #ccc;
+    overflow-y: auto; /* 스크롤 가능하게 설정 */
+  }
+  
+  .contacts-list {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .contact-item {
+    margin: 10px 0;
+    cursor: pointer; /* 클릭 가능한 요소로 보이도록 설정 */
+  }
+  
+  .error-message {
+    color: red;
+  }
+  
+  .business-card-container {
+    flex: 1;
+    padding: 20px;
+  }
+  
+  .business-card {
+    border: 1px solid #ccc;
+    padding: 20px;
+    border-radius: 10px;
+  }
+  
+  .business-card.placeholder {
+    color: #aaa;
+  }
+  
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+  }
+  
   
