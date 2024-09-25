@@ -56,6 +56,8 @@ const FeedPage: React.FC = () => {
     navigate("/create-post"); // 게시물 작성 페이지로 이동
   };
 
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
+
   if (error) {
     return <div>{error}</div>;
   }
@@ -74,7 +76,7 @@ const FeedPage: React.FC = () => {
             onClick={() => handlePostClick(post.postId)}
           >
             <img
-              src={`http://localhost:3000/posts/images/${post.imageUrl
+              src={`${baseUrl}/posts/images/${post.imageUrl
                 .replace(/\\/g, "/")
                 .replace(/^uploads\//, "")}`}
               alt="Post"
