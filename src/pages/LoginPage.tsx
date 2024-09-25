@@ -4,7 +4,7 @@ import { login, logout } from "../redux/userSlice";
 import { RootState, AppDispatch } from "../redux/store";
 import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError } from "axios"; // axios 에러때문에 import
 import "./LoginPage.css"; // Import the CSS file
 
 const LoginPage: React.FC = () => {
