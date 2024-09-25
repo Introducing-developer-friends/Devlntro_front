@@ -120,6 +120,29 @@
   background-color: #f1f1f1; /* 호버 시 배경색 변경 */
 }
 
-.comments-section {
-  margin-top: 20px; /* 위쪽 여백 */
+.comment {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin: 10px 0;
 }
+
+.actions-menu {
+  position: relative;
+}
+
+.actions-button {
+  cursor: pointer;
+}
+
+.actions-dropdown {
+  display: none;
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  z-index: 1;
+}
+
+.actions-menu:hover .actions-dropdown {
+  display: block;
+}
+

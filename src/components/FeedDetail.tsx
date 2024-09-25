@@ -26,8 +26,8 @@ interface PostDetail {
   commentsCount: number;
   comments: Comment[];
   likes: Like[];
-  isOwnPost: boolean; // 추가된 필드
-  userHasLiked: boolean; // 추가된 필드
+  isOwnPost: boolean;
+  userHasLiked: boolean;
 }
 
 interface FeedDetailProps {
@@ -36,11 +36,14 @@ interface FeedDetailProps {
 }
 
 const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
-  const [postDetail, setPostDetail] = useState<PostDetail | null>(null);
+  const [postDetail, setPostDetail] = useState<PostDetail | null>(null); // 게시글 상세보기 데이터
   const [error, setError] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [content, setContent] = useState<string>("");
-  const [imageUrl, setImageUrl] = useState<string>("");
+  const [isEditing, setIsEditing] = useState<boolean>(false); // 게시물 수정 상태
+  const [content, setContent] = useState<string>(""); // 불러올 게시글
+  const [imageUrl, setImageUrl] = useState<string>(""); // 불러올 이미지 url
+  const [newComment, setNewComment] = useState<string>(""); // 댓글
+  const [isEditingCommentId, setIsEditingCommentId] = useState<number | null>(null); // 수정 중인 댓글 id
+  const [editedCommentContent, setEditedCommentContent] = useState<string>(""); // 수정할 댓글 내용
 
   useEffect(() => {
     const fetchPostDetail = async () => {
@@ -79,7 +82,7 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
           },
         });
         alert("게시물이 삭제되었습니다.");
-        onClose(); // 삭제 후 모달 닫기
+        onClose();
         window.location.reload();
       } catch (error) {
         setError("게시물 삭제에 실패했습니다.");
@@ -133,6 +136,147 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
       setPostDetail(updatedPostDetail);
     } catch (error) {
       setError("좋아요 처리에 실패했습니다.");
+    }
+  };
+
+  // 댓글 작성 함수
+  const handleAddComment = async () => {
+    if (!newComment) {
+      alert("댓글 내용을 입력해주세요.");
+      return;
+    }
+
+    try {
+      const response = await axiosInstance.post(
+        `/posts/${postId}/comments`,
+        { content: newComment },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+          },
+        }
+      );
+      const newCommentData = {
+        commentId: response.data.commentId,
+        authorName: "현재 사용자 이름", // 사용자 이름을 적절히 설정하세요.
+        content: newComment,
+        createdAt: new Date().toISOString(),
+        likeCount: 0,
+      };
+      setPostDetail((prev) => {
+        if (prev) {
+          return {
+            ...prev,
+            comments: [...prev.comments, newCommentData],
+            commentsCount: prev.commentsCount + 1,
+          };
+        }
+        return prev;
+      });
+      setNewComment("");
+    } catch (error) {
+      setError("댓글 작성에 실패했습니다.");
+    }
+  };
+
+  // 댓글 수정 함수
+  const handleEditComment = (comment: Comment) => {
+    setIsEditingCommentId(comment.commentId);
+    setEditedCommentContent(comment.content);
+  };
+
+  const handleSaveCommentChanges = async () => {
+    if (!editedCommentContent) {
+      alert("댓글 내용을 입력해주세요.");
+      return;
+    }
+
+    try {
+      await axiosInstance.put(
+        `/posts/${postId}/comments/${isEditingCommentId}`,
+        { content: editedCommentContent },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+          },
+        }
+      );
+      setPostDetail((prev) => {
+        if (prev) {
+          const updatedComments = prev.comments.map((comment) => {
+            if (comment.commentId === isEditingCommentId) {
+              return { ...comment, content: editedCommentContent };
+            }
+            return comment;
+          });
+          return { ...prev, comments: updatedComments };
+        }
+        return prev;
+      });
+      setIsEditingCommentId(null);
+      setEditedCommentContent("");
+      alert("댓글이 수정되었습니다.");
+    } catch (error) {
+      setError("댓글 수정에 실패했습니다.");
+    }
+  };
+
+  // 댓글 삭제 함수
+  const handleDeleteComment = async (commentId: number) => {
+    if (window.confirm("정말로 댓글을 삭제하시겠습니까?")) {
+      try {
+        await axiosInstance.delete(`/posts/${postId}/comments/${commentId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+          },
+        });
+        setPostDetail((prev) => {
+          if (prev) {
+            return {
+              ...prev,
+              comments: prev.comments.filter((comment) => comment.commentId !== commentId),
+              commentsCount: prev.commentsCount - 1,
+            };
+          }
+          return prev;
+        });
+        alert("댓글이 삭제되었습니다.");
+      } catch (error) {
+        setError("댓글 삭제에 실패했습니다.");
+      }
+    }
+  };
+
+  // 댓글 좋아요 함수
+  const handleLikeComment = async (commentId: number) => {
+    try {
+      const response = await axiosInstance.post(
+        `/posts/${postId}/comments/${commentId}/like`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+          },
+        }
+      );
+      setPostDetail((prev) => {
+        if (prev) {
+          const updatedComments = prev.comments.map((comment) => {
+            if (comment.commentId === commentId) {
+              return {
+                ...comment,
+                likeCount: response.data.likeCount,
+              };
+            }
+            return comment;
+          });
+          return { ...prev, comments: updatedComments };
+        }
+        return prev;
+      });
+      alert(response.data.message);
+    } catch (error) {
+      setError("댓글 좋아요 처리에 실패했습니다.");
     }
   };
 
@@ -208,35 +352,42 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
             </p>
             <p>{new Date(postDetail.createdAt).toLocaleString()}</p>
             <p>{postDetail.content}</p>
-            <p>
-              좋아요 {postDetail.likesCount} · 댓글 {postDetail.commentsCount}
-            </p>
-
-            <div className="post-actions">
-              <button
-                onClick={handleLikeClick}
-                className={`like-button ${
-                  postDetail.userHasLiked ? "liked" : ""
-                }`}
-              >
-                👍 좋아요 ({postDetail.likesCount})
-              </button>
-            </div>
-
-            <div className="comments-section">
-              <h3>댓글</h3>
+            <p>좋아요 {postDetail.likesCount}개</p>
+            {!postDetail.userHasLiked && (
+              <button onClick={handleLikeClick}>좋아요</button>
+            )}
+            <h3>댓글 ({postDetail.commentsCount})</h3>
+            <div className="comments">
               {postDetail.comments.map((comment) => (
                 <div key={comment.commentId} className="comment">
-                  <p>
-                    <strong>{comment.authorName}</strong>: {comment.content}
-                  </p>
-                  <p>
-                    {new Date(comment.createdAt).toLocaleString()} - 좋아요{" "}
-                    {comment.likeCount}
-                  </p>
+                  <strong>{comment.authorName}</strong>
+                  <p>{isEditingCommentId === comment.commentId ? (
+                    <div>
+                      <textarea
+                        value={editedCommentContent}
+                        onChange={(e) => setEditedCommentContent(e.target.value)}
+                      />
+                      <button onClick={handleSaveCommentChanges}>저장</button>
+                    </div>
+                  ) : (
+                    <>
+                      <span>{comment.content}</span>
+                      <button onClick={() => handleEditComment(comment)}>수정</button>
+                      <button onClick={() => handleDeleteComment(comment.commentId)}>삭제</button>
+                      <button onClick={() => handleLikeComment(comment.commentId)}>좋아요 {comment.likeCount}</button>
+                    </>
+                  )}</p>
+                  <span>{comment.createdAt}</span>
                 </div>
               ))}
             </div>
+            <input
+              type="text"
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="댓글 추가..."
+            />
+            <button onClick={handleAddComment}>댓글 추가</button>
           </div>
         )}
       </div>
