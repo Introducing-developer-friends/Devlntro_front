@@ -1,8 +1,9 @@
 import axios from "axios";
 
 // Axios 인스턴스 생성
+const baseUrl = import.meta.env.VITE_API_BASE_URL;
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:3000", // 백엔드 API의 기본 URL 설정
+  baseURL: baseUrl, // 백엔드 API의 기본 URL 설정
   timeout: 5000, // 요청 타임아웃 설정 (밀리초 단위)
   headers: {
     "Content-Type": "application/json", // 기본 헤더 설정
