@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../api/axiosInstance";
+import { useNavigate } from "react-router-dom"; // useNavigate 추가
 import "./FriendsPage.css";
 
 interface Contact {
@@ -20,6 +21,7 @@ const FriendsPage: React.FC = () => {
   const [addError, setAddError] = useState<string | null>(null); // 인맥 추가 오류 상태
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null); // 선택된 인맥 정보 상태
   const [detailError, setDetailError] = useState<string | null>(null); // 상세 조회 오류 상태
+  const navigate = useNavigate(); // useNavigate 훅 추가
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -97,6 +99,13 @@ const FriendsPage: React.FC = () => {
     }
   };
 
+  // 피드로 이동 버튼 클릭 시
+  const handleGoToFeed = () => {
+    if (selectedContact) {
+      navigate(`/friends-feed/${selectedContact.userId}`); // 선택된 친구의 userId를 넘겨줌
+    }
+  };
+
   return (
     <div className="friends-page">
       {/* 왼쪽: 친구 목록 */}
@@ -162,6 +171,7 @@ const FriendsPage: React.FC = () => {
             <p><strong>Position:</strong> {selectedContact.position || "N/A"}</p>
             <p><strong>Email:</strong> {selectedContact.email || "N/A"}</p>
             <p><strong>Phone:</strong> {selectedContact.phone || "N/A"}</p>
+            <button onClick={handleGoToFeed}>피드로 이동</button>
           </div>
         ) : (
           <div className="business-card placeholder">

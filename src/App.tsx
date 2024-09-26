@@ -3,13 +3,13 @@ import LoginPage from "./pages/LoginPage";
 import SignUpPage from "./pages/SignUpPage";
 import FeedPage from "./pages/FeedPage";
 import FriendsPage from "./pages/FriendsPage";
+import FriendsFeedPage from "./pages/FriendsFeedPage";
 import MyPage from "./pages/MyPage";
-import NavBar from './components/NavBar';
+import NavBar from "./components/NavBar";
 import "./App.css";
 import CreatePostPage from "./pages/CreatePostPage";
 
 function App() {
-
   return (
     <Router>
       <div className="App">
@@ -18,10 +18,11 @@ function App() {
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/feed" element={<FeedPage />} />
           <Route path="/friends" element={<FriendsPage />} />
+          <Route path="/friends-feed/:userId" element={<FriendsFeedPage />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/create-post" element={<CreatePostPage />} />
         </Routes>
-        <NavBar/>
+        <NavBar />
       </div>
     </Router>
   );
