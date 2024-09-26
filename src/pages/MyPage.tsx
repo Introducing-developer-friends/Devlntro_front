@@ -54,7 +54,7 @@ const MyPage: React.FC = () => {
   useEffect(() => {
     // 명함 정보 불러오기
     axiosInstance
-      .get(`/contacts/70`, {
+      .get(`/contacts/${userId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
         },
