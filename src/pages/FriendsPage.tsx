@@ -21,6 +21,7 @@ const FriendsPage: React.FC = () => {
   const [addError, setAddError] = useState<string | null>(null); // 인맥 추가 오류 상태
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null); // 선택된 인맥 정보 상태
   const [detailError, setDetailError] = useState<string | null>(null); // 상세 조회 오류 상태
+  const [deleteError, setDeleteError] = useState<string | null>(null); // 인맥 삭제 오류 상태
   const navigate = useNavigate(); // useNavigate 훅 추가
 
   // 토큰이 없는 경우 로그인 페이지로 리다이렉팅
@@ -85,6 +86,30 @@ const FriendsPage: React.FC = () => {
     }
   };
 
+  // 인맥 삭제
+  const handleDeleteContact = async (contactId: string) => {
+    try {
+      console.log("Deleting contact with ID:", contactId);
+      const response = await axiosInstance.delete(`/contacts/${contactId}`);
+      console.log("Contact deleted:", response.data);
+      setDeleteError(null);
+
+      // 삭제된 후 연락처 목록 다시 불러오기
+      const updatedContacts = await axiosInstance.get("/contacts");
+      setContacts(updatedContacts.data.contacts);
+      window.location.reload(); // 새로고침, 디버깅시 콘솔 초기화되니 주석처리하고 디버깅할 것
+    } catch (error: any) {
+      console.error("연락처 삭제 에러:", error);
+      if (error.response && error.response.status === 400) {
+        setDeleteError("유효하지 않은 인맥 ID입니다.");
+      } else if (error.response && error.response.status === 404) {
+        setDeleteError("해당 인맥을 찾을 수 없습니다.");
+      } else {
+        setDeleteError("인맥 삭제 중 오류가 발생했습니다. 다시 시도해주세요.");
+      }
+    }
+  };
+
   // 상세보기할 인맥 선택
   const handleSelectContact = async (contact: Contact) => {
     setSelectedContact(null); // 이전 선택 초기화
@@ -138,6 +163,7 @@ const FriendsPage: React.FC = () => {
               <p>
                 <strong>Department:</strong> {contact.department}
               </p>
+                <button onClick={() => handleDeleteContact(contact.userId)}>삭제</button>
             </li>
           ))
         ) : (
