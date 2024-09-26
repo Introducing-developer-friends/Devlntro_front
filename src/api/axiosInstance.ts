@@ -1,4 +1,6 @@
 import axios from "axios";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 // Axios 인스턴스 생성
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
@@ -30,10 +32,10 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       console.error("Unauthorized access - redirecting to login...");
-      // navigate("/login"); // React Router를 사용할 경우
     }
     return Promise.reject(error);
   }
 );
+
 
 export default axiosInstance;

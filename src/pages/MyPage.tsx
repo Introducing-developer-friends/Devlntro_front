@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import axiosInstance from '../api/axiosInstance';
 import { RootState } from '../redux/store';
@@ -41,9 +42,19 @@ const MyPage: React.FC = () => {
   const dispatch = useDispatch();
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
   
+  // 토큰이 없는 경우 로그인 페이지로 리다이렉팅
+  const isAuthenticated = !!localStorage.getItem('token');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
+
   useEffect(() => {
     // 명함 정보 불러오기
-    axiosInstance.get(`/contacts/70`, {
+    axiosInstance.get(`/contacts/70`, { // api 수정이 필요한 부분
       headers: {
         Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
       },

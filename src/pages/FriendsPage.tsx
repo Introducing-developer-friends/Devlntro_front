@@ -23,6 +23,15 @@ const FriendsPage: React.FC = () => {
   const [detailError, setDetailError] = useState<string | null>(null); // 상세 조회 오류 상태
   const navigate = useNavigate(); // useNavigate 훅 추가
 
+  // 토큰이 없는 경우 로그인 페이지로 리다이렉팅
+  const isAuthenticated = !!localStorage.getItem('token');
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
+
   useEffect(() => {
     const fetchContacts = async () => {
       try {

@@ -20,6 +20,15 @@ const FeedPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const navigate = useNavigate();
 
+  // 토큰이 없는 경우 로그인 페이지로 리다이렉팅
+  const isAuthenticated = !!localStorage.getItem('token');
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
+
   useEffect(() => {
     const fetchPosts = async () => {
       try {
