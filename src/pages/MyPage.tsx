@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import axiosInstance from '../api/axiosInstance';
-import { RootState } from '../redux/store';
-import './MyPage.css';
-import FeedDetail from '../components/FeedDetail'; // 모달 컴포넌트
-import PasswordChange from '../components/PasswordChange'; // 비밀번호 변경 모달 컴포넌트
-import { logout } from '../redux/userSlice'; // 로그아웃 액션
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import axiosInstance from "../api/axiosInstance";
+import { RootState } from "../redux/store";
+import "./MyPage.css";
+import FeedDetail from "../components/FeedDetail"; // 모달 컴포넌트
+import PasswordChange from "../components/PasswordChange"; // 비밀번호 변경 모달 컴포넌트
 
 // 명함 정보 인터페이스 정의
 interface ContactInfo {
@@ -37,41 +36,45 @@ const MyPage: React.FC = () => {
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState<boolean>(false); // 비밀번호 모달 상태
+  const [isPasswordModalOpen, setIsPasswordModalOpen] =
+    useState<boolean>(false); // 비밀번호 모달 상태
   const userId = useSelector((state: RootState) => state.user.userId);
-  const dispatch = useDispatch();
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
-  
+
   // 토큰이 없는 경우 로그인 페이지로 리다이렉팅
-  const isAuthenticated = !!localStorage.getItem('token');
+  const isAuthenticated = !!localStorage.getItem("token");
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login');
+      navigate("/login");
     }
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
     // 명함 정보 불러오기
-    axiosInstance.get(`/contacts/70`, { // api 수정이 필요한 부분
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
-      },
-    })
-    .then(response => setContactInfo(response.data.contact))
-    .catch(error => console.error(error));
+    axiosInstance
+      .get(`/contacts/70`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+        },
+      })
+      .then((response) => setContactInfo(response.data.contact))
+      .catch((error) => console.error(error));
   }, [userId]);
 
   useEffect(() => {
     // 게시물 피드 불러오기
     const fetchPosts = async () => {
       try {
-        const response = await axiosInstance.get(`/posts?filter=own&sort=latest`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
-          },
-        });
+        const response = await axiosInstance.get(
+          `/posts?filter=own&sort=latest`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+            },
+          }
+        );
         setPosts(response.data.posts);
       } catch (error) {
         setError("게시물을 불러오는 중 문제가 발생했습니다.");
@@ -93,40 +96,50 @@ const MyPage: React.FC = () => {
   };
 
   const handleAccountDeletion = (password: string | null) => {
-    if (window.confirm('정말로 탈퇴하시겠습니까?')) {
-      axiosInstance.delete('/users', {
-        headers: { Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}` },
-        data: { password }
-      })
-      .then(response => alert(response.data.message))
-      .catch(error => alert(error.response.data.message));
+    if (window.confirm("정말로 탈퇴하시겠습니까?")) {
+      axiosInstance
+        .delete("/users", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+          },
+          data: { password },
+        })
+        .then((response) => alert(response.data.message))
+        .catch((error) => alert(error.response.data.message));
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('JWT_TOKEN');
-    dispatch(logout());
+    console.log("잘 작동!!!");
+    localStorage.removeItem("token");
+    window.location.reload();
   };
 
   const handleProfileUpdate = (updatedInfo: Partial<ContactInfo>) => {
-    axiosInstance.put('/users/businessprofile', updatedInfo, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}` },
-    })
-    .then(response => alert(response.data.message))
-    .catch(error => alert(error.response.data.message));
+    axiosInstance
+      .put("/users/businessprofile", updatedInfo, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+        },
+      })
+      .then((response) => alert(response.data.message))
+      .catch((error) => alert(error.response.data.message));
   };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (!dropdownOpen) return;
       const target = event.target as HTMLElement;
-      if (!target.closest('.dropdown-menu') && !target.closest('.settings button')) {
+      if (
+        !target.closest(".dropdown-menu") &&
+        !target.closest(".settings button")
+      ) {
         setDropdownOpen(false);
       }
     };
-  
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
   }, [dropdownOpen]);
 
   if (error) {
@@ -140,7 +153,13 @@ const MyPage: React.FC = () => {
         {dropdownOpen && (
           <ul className="dropdown-menu">
             <li onClick={() => setIsPasswordModalOpen(true)}>비밀번호 변경</li>
-            <li onClick={() => handleAccountDeletion(prompt('비밀번호를 입력해주세요'))}>회원탈퇴</li>
+            <li
+              onClick={() =>
+                handleAccountDeletion(prompt("비밀번호를 입력해주세요"))
+              }
+            >
+              회원탈퇴
+            </li>
             <li onClick={handleLogout}>로그아웃</li>
           </ul>
         )}
@@ -150,19 +169,21 @@ const MyPage: React.FC = () => {
       {contactInfo && (
         <div className="business-card">
           {editMode ? (
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const updatedInfo: Partial<ContactInfo> = {
-                name: (e.target as any)[0].value,
-                company: (e.target as any)[1].value,
-                department: (e.target as any)[2].value,
-                position: (e.target as any)[3].value,
-                email: (e.target as any)[4].value,
-                phone: (e.target as any)[5].value,
-              };
-              handleProfileUpdate(updatedInfo);
-              setEditMode(false);
-            }}>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const updatedInfo: Partial<ContactInfo> = {
+                  name: (e.target as any)[0].value,
+                  company: (e.target as any)[1].value,
+                  department: (e.target as any)[2].value,
+                  position: (e.target as any)[3].value,
+                  email: (e.target as any)[4].value,
+                  phone: (e.target as any)[5].value,
+                };
+                handleProfileUpdate(updatedInfo);
+                setEditMode(false);
+              }}
+            >
               <input type="text" defaultValue={contactInfo.name} />
               <input type="text" defaultValue={contactInfo.company} />
               <input type="text" defaultValue={contactInfo.department} />
@@ -172,7 +193,7 @@ const MyPage: React.FC = () => {
               <button type="submit">저장</button>
             </form>
           ) : (
-    <div>
+            <div>
               <p>{contactInfo.name}</p>
               <p>{contactInfo.company}</p>
               <p>{contactInfo.department}</p>
