@@ -42,7 +42,9 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
   const [content, setContent] = useState<string>(""); // 불러올 게시글
   const [imageUrl, setImageUrl] = useState<string>(""); // 불러올 이미지 url
   const [newComment, setNewComment] = useState<string>(""); // 댓글
-  const [isEditingCommentId, setIsEditingCommentId] = useState<number | null>(null); // 수정 중인 댓글 id
+  const [isEditingCommentId, setIsEditingCommentId] = useState<number | null>(
+    null
+  ); // 수정 중인 댓글 id
   const [editedCommentContent, setEditedCommentContent] = useState<string>(""); // 수정할 댓글 내용
 
   useEffect(() => {
@@ -234,7 +236,9 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
           if (prev) {
             return {
               ...prev,
-              comments: prev.comments.filter((comment) => comment.commentId !== commentId),
+              comments: prev.comments.filter(
+                (comment) => comment.commentId !== commentId
+              ),
               commentsCount: prev.commentsCount - 1,
             };
           }
@@ -294,15 +298,20 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
     <div className="modal">
       <div className="modal-content">
         <div className="modal-header">
-          {postDetail.isOwnPost && (
-            <div className="actions-menu">
+          <div className="actions-menu">
+            {postDetail.isOwnPost ? (
               <span className="actions-button">...</span>
+            ) : (
+              // 투명한 빈 박스 추가
+              <span className="transparent-box"></span>
+            )}
+            {postDetail.isOwnPost && (
               <div className="actions-dropdown">
                 <button onClick={handleEditClick}>수정</button>
                 <button onClick={handleDeleteClick}>삭제</button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
           <span className="close" onClick={onClose}>
             &times;
           </span>
@@ -361,22 +370,36 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
               {postDetail.comments.map((comment) => (
                 <div key={comment.commentId} className="comment">
                   <strong>{comment.authorName}</strong>
-                  <p>{isEditingCommentId === comment.commentId ? (
-                    <div>
-                      <textarea
-                        value={editedCommentContent}
-                        onChange={(e) => setEditedCommentContent(e.target.value)}
-                      />
-                      <button onClick={handleSaveCommentChanges}>저장</button>
-                    </div>
-                  ) : (
-                    <>
-                      <span>{comment.content}</span>
-                      <button onClick={() => handleEditComment(comment)}>수정</button>
-                      <button onClick={() => handleDeleteComment(comment.commentId)}>삭제</button>
-                      <button onClick={() => handleLikeComment(comment.commentId)}>좋아요 {comment.likeCount}</button>
-                    </>
-                  )}</p>
+                  <p>
+                    {isEditingCommentId === comment.commentId ? (
+                      <div>
+                        <textarea
+                          value={editedCommentContent}
+                          onChange={(e) =>
+                            setEditedCommentContent(e.target.value)
+                          }
+                        />
+                        <button onClick={handleSaveCommentChanges}>저장</button>
+                      </div>
+                    ) : (
+                      <>
+                        <span>{comment.content}</span>
+                        <button onClick={() => handleEditComment(comment)}>
+                          수정
+                        </button>
+                        <button
+                          onClick={() => handleDeleteComment(comment.commentId)}
+                        >
+                          삭제
+                        </button>
+                        <button
+                          onClick={() => handleLikeComment(comment.commentId)}
+                        >
+                          좋아요 {comment.likeCount}
+                        </button>
+                      </>
+                    )}
+                  </p>
                   <span>{comment.createdAt}</span>
                 </div>
               ))}

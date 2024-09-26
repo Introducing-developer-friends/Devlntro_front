@@ -136,8 +136,7 @@
 
 .actions-dropdown {
   display: none;
-  position: absolute;
-  background-color: #fff;
+  position: fixed;
   border: 1px solid #ccc;
   z-index: 1;
 }
