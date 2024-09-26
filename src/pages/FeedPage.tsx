@@ -16,6 +16,7 @@ interface Post {
 const FeedPage: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
+  const [sortOption, setSortOption] = useState<string>("latest"); // 정렬 옵션 상태 추가
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ const FeedPage: React.FC = () => {
     const fetchPosts = async () => {
       try {
         const response = await axiosInstance.get(
-          "/posts?filter=all&sort=latest",
+          `/posts?filter=all&sort=${sortOption}`, // sortOption에 따른 동적 API 요청
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
@@ -49,7 +50,7 @@ const FeedPage: React.FC = () => {
     };
 
     fetchPosts();
-  }, []);
+  }, [sortOption]); // sortOption 변경 시 다시 게시물 불러오기
 
   const handlePostClick = (postId: number) => {
     setSelectedPostId(postId);
@@ -74,9 +75,22 @@ const FeedPage: React.FC = () => {
   return (
     <div className="feed-container">
       <h1>게시물 피드</h1>
+
+      {/* 정렬 옵션 선택 드롭다운 */}
+      <select
+        value={sortOption}
+        onChange={(e) => setSortOption(e.target.value)} // 선택된 정렬 옵션 업데이트
+        className="sort-dropdown"
+      >
+        <option value="latest">최신순</option>
+        <option value="likes">좋아요 순</option>
+        <option value="comments">댓글 순</option>
+      </select>
+
       <button className="create-post-button" onClick={handleCreatePostClick}>
         게시물 작성
       </button>
+
       <div className="posts-wrapper">
         {posts.map((post) => (
           <div

@@ -18,6 +18,7 @@ const FriendsFeedPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null); // 선택된 게시물 ID 상태
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // 모달 상태
+  const [sortOption, setSortOption] = useState<string>("latest"); // 분류 기준 상태
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
   // 토큰이 없는 경우 로그인 페이지로 리다이렉팅
@@ -34,8 +35,8 @@ const FriendsFeedPage: React.FC = () => {
     const fetchPosts = async () => {
       try {
         const response = await axiosInstance.get(
-          `/posts?filter=specific&specificUserId=${userId}&sord=latest`
-        ); // 해당 친구의 피드 불러오기
+          `/posts?filter=specific&specificUserId=${userId}&sort=${sortOption}` // 선택된 분류 기준 반영
+        );
         setPosts(response.data.posts);
       } catch (error) {
         setError("게시물을 불러오는 중 문제가 발생했습니다.");
@@ -44,7 +45,11 @@ const FriendsFeedPage: React.FC = () => {
     };
 
     fetchPosts();
-  }, [userId]);
+  }, [userId, sortOption]); // sortOption이 변경될 때마다 게시물 재요청
+
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortOption(e.target.value); // 분류 기준 변경
+  };
 
   const handlePostClick = (postId: number) => {
     setSelectedPostId(postId);
@@ -63,6 +68,15 @@ const FriendsFeedPage: React.FC = () => {
   return (
     <div className="friends-feed-page">
       <h1>친구의 피드</h1>
+      <div className="sort-options">
+        <label>정렬 기준:</label>
+        <select value={sortOption} onChange={handleSortChange}>
+          <option value="latest">최신순</option>
+          <option value="likes">좋아요순</option>
+          <option value="comments">댓글순</option>
+        </select>
+      </div>
+
       <div className="posts-wrapper">
         {posts.length > 0 ? (
           posts.map((post) => (

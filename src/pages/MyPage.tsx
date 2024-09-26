@@ -38,12 +38,12 @@ const MyPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] =
     useState<boolean>(false); // 비밀번호 모달 상태
+  const [sortOption, setSortOption] = useState<string>("latest"); // 분류 기준 상태
   const userId = useSelector((state: RootState) => state.user.userId);
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
-  // 토큰이 없는 경우 로그인 페이지로 리다이렉팅
-  const isAuthenticated = !!localStorage.getItem("token");
   const navigate = useNavigate();
+  const isAuthenticated = !!localStorage.getItem("token");
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -68,7 +68,7 @@ const MyPage: React.FC = () => {
     const fetchPosts = async () => {
       try {
         const response = await axiosInstance.get(
-          `/posts?filter=own&sort=latest`,
+          `/posts?filter=own&sort=${sortOption}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
@@ -83,7 +83,11 @@ const MyPage: React.FC = () => {
     };
 
     fetchPosts();
-  }, [userId]);
+  }, [userId, sortOption]); // sortOption이 변경될 때마다 게시물 재요청
+
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortOption(e.target.value); // 분류 기준 변경
+  };
 
   const handlePostClick = (postId: number) => {
     setSelectedPostId(postId);
@@ -208,6 +212,14 @@ const MyPage: React.FC = () => {
 
       {/* 게시물 피드 */}
       <div className="posts-wrapper">
+        <div className="sort-options">
+          <label>정렬 기준:</label>
+          <select value={sortOption} onChange={handleSortChange}>
+            <option value="latest">최신순</option>
+            <option value="likes">좋아요순</option>
+            <option value="comments">댓글순</option>
+          </select>
+        </div>
         {posts.map((post) => (
           <div
             key={post.postId}
