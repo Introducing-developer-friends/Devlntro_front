@@ -1,83 +1,195 @@
 /* FriendsPage.css */
 
-.contacts-list {
-    list-style-type: none;
-    padding: 0;
-  }
-  
-  .contact-item {
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 10px;
-    margin: 10px 0;
-    background-color: #f9f9f9;
-  }
-  
-  .error-message {
-    color: red;
-  }
-  
-  .contact-item p {
-    margin: 5px 0;
-  }
+.friends-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f0f2f5;
+}
 
-  .friends-page {
-    display: flex;
-    height: 100vh;
-  }
-  
-  .contacts-list-container {
-    flex: 1;
-    padding: 20px;
-    border-right: 1px solid #ccc;
-    overflow-y: auto; /* 스크롤 가능하게 설정 */
-  }
-  
-  .contacts-list {
-    list-style-type: none;
-    padding: 0;
-  }
-  
-  .contact-item {
-    margin: 10px 0;
-    cursor: pointer; /* 클릭 가능한 요소로 보이도록 설정 */
-  }
-  
-  .error-message {
-    color: red;
-  }
-  
-  .business-card-container {
-    flex: 1;
-    padding: 20px;
-  }
-  
-  .business-card {
-    border: 1px solid #ccc;
-    padding: 20px;
-    border-radius: 10px;
-  }
-  
-  .business-card.placeholder {
-    color: #aaa;
-  }
-  
-  .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .modal-content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-  }
-  
-  
+.top-bar {
+  display: flex;
+  justify-content: flex-start;
+  padding: 10px;
+  background-color: #1877f2;
+}
+
+.top-bar button {
+  margin-right: 10px;
+  padding: 8px 15px;
+  background-color: #ffffff;
+  color: #1877f2;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.top-bar button:hover {
+  background-color: #e4e6eb;
+}
+
+.main-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.left-panel {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #ffffff;
+  border-right: 1px solid #ddd;
+}
+
+.right-panel {
+  flex: 1;
+  padding: 20px;
+  background-color: #ffffff;
+}
+
+.contacts-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.contact-item {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 10px 0;
+  background-color: #f7f8fa;
+  cursor: pointer;
+  transition: box-shadow 0.3s;
+}
+
+.contact-item:hover {
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.contact-item p {
+  margin: 5px 0;
+  color: #050505;
+}
+
+.contact-item button {
+  margin-top: 5px;
+  padding: 5px 10px;
+  background-color: #e41e3f;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.contact-item button:hover {
+  background-color: #d01a38;
+}
+
+.contact-details {
+  border: 1px solid #ddd;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #f7f8fa;
+}
+
+.contact-details h2 {
+  margin-top: 0;
+  color: #1877f2;
+}
+
+.contact-details p {
+  margin: 10px 0;
+  color: #050505;
+}
+
+.go-to-feed-btn {
+  margin-top: 15px;
+  padding: 10px 15px;
+  background-color: #1877f2;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.go-to-feed-btn:hover {
+  background-color: #166fe5;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 500px;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  color: #1877f2;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.modal-content button {
+  margin-right: 10px;
+  padding: 8px 15px;
+  background-color: #1877f2;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.modal-content button:hover {
+  background-color: #166fe5;
+}
+
+.loading {
+  text-align: center;
+  font-style: italic;
+  color: #65676b;
+}
+
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #4CAF50;
+  color: white;
+  padding: 15px;
+  border-radius: 5px;
+  z-index: 1000;
+}
+
+.error-message {
+  color: #ff0000;
+  background-color: #ffeeee;
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+}
