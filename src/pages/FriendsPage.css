@@ -1,83 +1,147 @@
 /* FriendsPage.css */
 
-.contacts-list {
-    list-style-type: none;
-    padding: 0;
-  }
-  
-  .contact-item {
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 10px;
-    margin: 10px 0;
-    background-color: #f9f9f9;
-  }
-  
-  .error-message {
-    color: red;
-  }
-  
-  .contact-item p {
-    margin: 5px 0;
-  }
+.friends-page {
+  display: flex;
+  height: 100vh;
+}
 
-  .friends-page {
-    display: flex;
-    height: 100vh;
-  }
-  
-  .contacts-list-container {
-    flex: 1;
-    padding: 20px;
-    border-right: 1px solid #ccc;
-    overflow-y: auto; /* 스크롤 가능하게 설정 */
-  }
-  
-  .contacts-list {
-    list-style-type: none;
-    padding: 0;
-  }
-  
-  .contact-item {
-    margin: 10px 0;
-    cursor: pointer; /* 클릭 가능한 요소로 보이도록 설정 */
-  }
-  
-  .error-message {
-    color: red;
-  }
-  
-  .business-card-container {
-    flex: 1;
-    padding: 20px;
-  }
-  
-  .business-card {
-    border: 1px solid #ccc;
-    padding: 20px;
-    border-radius: 10px;
-  }
-  
-  .business-card.placeholder {
-    color: #aaa;
-  }
-  
-  .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .modal-content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-  }
-  
-  
+.left-panel {
+  flex: 1;
+  padding: 20px;
+  border-right: 1px solid #ccc;
+  overflow-y: auto;
+}
+
+.right-panel {
+  flex: 1;
+  padding: 20px;
+}
+
+.tabs {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.tabs button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background-color: #f0f0f0;
+  cursor: pointer;
+}
+
+.tabs button.active {
+  background-color: #007bff;
+  color: white;
+}
+
+.contacts-list,
+.requests-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.contact-item,
+.request-item {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  margin: 10px 0;
+  background-color: #f9f9f9;
+  cursor: pointer;
+}
+
+.contact-item p,
+.request-item p {
+  margin: 5px 0;
+}
+
+.request-item button {
+  margin-right: 5px;
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.request-item button:hover {
+  background-color: #0056b3;
+}
+
+.add-contact {
+  margin-top: 20px;
+}
+
+.add-contact input {
+  width: 70%;
+  padding: 5px;
+  margin-right: 10px;
+}
+
+.add-contact button {
+  padding: 5px 10px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.error-message {
+  color: red;
+  margin-top: 10px;
+}
+
+.business-card {
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.business-card.placeholder {
+  color: #aaa;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.contact-details h2 {
+  margin-top: 0;
+  color: #333;
+}
+
+.contact-details p {
+  margin: 5px 0;
+  color: #666;
+}
+
+.loading {
+  text-align: center;
+  font-style: italic;
+  color: #666;
+}
+
+.error-message {
+  color: #ff0000;
+  background-color: #ffeeee;
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+}
