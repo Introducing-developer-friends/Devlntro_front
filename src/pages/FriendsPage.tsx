@@ -34,7 +34,21 @@ const FriendsPage: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
+  const [activeModal, setActiveModal] = useState<'add' | 'received' | 'sent' | null>(null);
+
   const isAuthenticated = !!localStorage.getItem('token');
+
+
+  const handleGoToFeed = () => {
+    if (selectedContact) {
+      navigate(`/friends-feed/${selectedContact.userId}`);
+    }
+  };
+
+  const toggleModal = (modalType: 'add' | 'received' | 'sent') => {
+    setActiveModal(activeModal === modalType ? null : modalType);
+  };
+
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -150,15 +164,15 @@ const FriendsPage: React.FC = () => {
 
   return (
     <div className="friends-page">
-      <div className="left-panel">
-        <h2>Contacts and Requests</h2>
-        <div className="tabs">
-          <button onClick={() => setActiveTab('contacts')} className={activeTab === 'contacts' ? 'active' : ''}>Contacts</button>
-          <button onClick={() => setActiveTab('received')} className={activeTab === 'received' ? 'active' : ''}>Received Requests</button>
-          <button onClick={() => setActiveTab('sent')} className={activeTab === 'sent' ? 'active' : ''}>Sent Requests</button>
-        </div>
-        
-        {activeTab === 'contacts' && (
+      <div className="top-bar">
+        <button onClick={() => toggleModal('add')}>Add Contact</button>
+        <button onClick={() => toggleModal('received')}>Received Requests</button>
+        <button onClick={() => toggleModal('sent')}>Sent Requests</button>
+      </div>
+
+      <div className="main-content">
+        <div className="left-panel">
+          <h2>My Contacts</h2>
           <div className="contacts-list">
             {contacts.map((contact) => (
               <div key={contact.userId} className="contact-item" onClick={() => handleSelectContact(contact)}>
@@ -172,10 +186,47 @@ const FriendsPage: React.FC = () => {
               </div>
             ))}
           </div>
-        )}
+        </div>
 
-        {activeTab === 'received' && (
-          <div className="requests-list">
+        <div className="right-panel">
+          {isLoading ? (
+            <p className="loading">Loading contact details...</p>
+          ) : selectedContact ? (
+            <div className="contact-details">
+              <h2>{selectedContact.name}</h2>
+              <p>Company: {selectedContact.company}</p>
+              <p>Department: {selectedContact.department}</p>
+              <p>Position: {selectedContact.position || 'N/A'}</p>
+              <p>Email: {selectedContact.email || 'N/A'}</p>
+              <p>Phone: {selectedContact.phone || 'N/A'}</p>
+              <button onClick={handleGoToFeed} className="go-to-feed-btn">Go to User's Feed</button>
+            </div>
+          ) : (
+            <p>Select a contact to view details</p>
+          )}
+        </div>
+      </div>
+
+      {activeModal === 'add' && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3>Add New Contact</h3>
+            <input
+              type="text"
+              value={newContactId}
+              onChange={(e) => setNewContactId(e.target.value)}
+              placeholder="Enter user ID"
+            />
+            <button onClick={handleAddContactRequest}>Send Request</button>
+            <button onClick={() => setActiveModal(null)}>Close</button>
+          </div>
+        </div>
+      )}
+
+      {activeModal === 'received' && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3>Received Requests</h3>
             {receivedRequests.map((request) => (
               <div key={request.requestId} className="request-item">
                 <p>{request.senderName} ({request.senderLoginId})</p>
@@ -183,47 +234,25 @@ const FriendsPage: React.FC = () => {
                 <button onClick={() => handleRejectRequest(request.requestId)}>Reject</button>
               </div>
             ))}
+            <button onClick={() => setActiveModal(null)}>Close</button>
           </div>
-        )}
+        </div>
+      )}
 
-        {activeTab === 'sent' && (
-          <div className="requests-list">
+      {activeModal === 'sent' && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3>Sent Requests</h3>
             {sentRequests.map((request) => (
               <div key={request.requestId} className="request-item">
                 <p>To: {request.receiverName} ({request.receiverLoginId})</p>
                 <p>Status: Pending</p>
               </div>
             ))}
+            <button onClick={() => setActiveModal(null)}>Close</button>
           </div>
-        )}
-
-<div className="add-contact">
-          <input
-            type="text"
-            value={newContactId}
-            onChange={(e) => setNewContactId(e.target.value)}
-            placeholder="Enter user ID"
-          />
-          <button onClick={handleAddContactRequest}>Send Request</button>
         </div>
-      </div>
-
-      <div className="right-panel">
-        {isLoading ? (
-          <p>Loading contact details...</p>
-        ) : selectedContact ? (
-          <div className="contact-details">
-            <h2>{selectedContact.name}</h2>
-            <p>Company: {selectedContact.company}</p>
-            <p>Department: {selectedContact.department}</p>
-            <p>Position: {selectedContact.position || 'N/A'}</p>
-            <p>Email: {selectedContact.email || 'N/A'}</p>
-            <p>Phone: {selectedContact.phone || 'N/A'}</p>
-          </div>
-        ) : (
-          <p>Select a contact to view details</p>
-        )}
-      </div>
+      )}
 
       {notification && <div className="notification">{notification}</div>}
       {error && <div className="error-message">{error}</div>}
