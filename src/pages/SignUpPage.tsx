@@ -37,6 +37,7 @@ const SignUpPage: React.FC = () => {
       const signUpData = {
         login_id: userId,
         password,
+        confirm_password: confirmPassword,  // confirmPassword 필드 추가
         name: username,
         company,
         department,

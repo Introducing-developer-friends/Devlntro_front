@@ -150,6 +150,17 @@ const MyPage: React.FC = () => {
     return <div>{error}</div>;
   }
 
+  const processImageUrl = (imageUrl: string) => {
+    if (!imageUrl) return '';
+    // URL이 이미 완전한 형태인 경우 그대로 반환
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    // 상대 경로인 경우 baseUrl과 결합
+    const processedUrl = `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl.replace(/\\/g, "/")}`;
+    return processedUrl;
+  };
+
   return (
     <div className="my-page">
       <div className="settings">
@@ -227,11 +238,14 @@ const MyPage: React.FC = () => {
             onClick={() => handlePostClick(post.postId)}
           >
             <img
-              src={`${baseUrl}/posts/images/${post.imageUrl
-                .replace(/\\/g, "/")
-                .replace(/^uploads\//, "")}`}
-              alt="Post"
+              src={processImageUrl(post.imageUrl)}
+              alt={`Post by ${post.createrName}`}
               className="post-image"
+              onError={(e) => {
+                console.error("Image load error:", e);
+                (e.target as HTMLImageElement).src = "https://via.placeholder.com/300x200?text=No+Image";
+                (e.target as HTMLImageElement).alt = "Image load failed";
+              }}
             />
             <div className="post-info">
               <p>{post.createrName}</p>
