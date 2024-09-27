@@ -161,6 +161,11 @@ const MyPage: React.FC = () => {
     return processedUrl;
   };
 
+  const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
   return (
     <div className="my-page">
       <div className="settings">
@@ -168,101 +173,90 @@ const MyPage: React.FC = () => {
         {dropdownOpen && (
           <ul className="dropdown-menu">
             <li onClick={() => setIsPasswordModalOpen(true)}>비밀번호 변경</li>
-            <li
-              onClick={() =>
-                handleAccountDeletion(prompt("비밀번호를 입력해주세요"))
-              }
-            >
-              회원탈퇴
-            </li>
+            <li onClick={() => handleAccountDeletion(prompt("비밀번호를 입력해주세요"))}>회원탈퇴</li>
             <li onClick={handleLogout}>로그아웃</li>
           </ul>
         )}
       </div>
 
-      {/* 명함 정보 */}
       {contactInfo && (
-        <div className="business-card">
+        <div className="contact-info">
+          <h2>My Profile</h2>
           {editMode ? (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const updatedInfo: Partial<ContactInfo> = {
-                  name: (e.target as any)[0].value,
-                  company: (e.target as any)[1].value,
-                  department: (e.target as any)[2].value,
-                  position: (e.target as any)[3].value,
-                  email: (e.target as any)[4].value,
-                  phone: (e.target as any)[5].value,
-                };
-                handleProfileUpdate(updatedInfo);
-                setEditMode(false);
-              }}
-            >
-              <input type="text" defaultValue={contactInfo.name} />
-              <input type="text" defaultValue={contactInfo.company} />
-              <input type="text" defaultValue={contactInfo.department} />
-              <input type="text" defaultValue={contactInfo.position} />
-              <input type="email" defaultValue={contactInfo.email} />
-              <input type="tel" defaultValue={contactInfo.phone} />
-              <button type="submit">저장</button>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const updatedInfo: Partial<ContactInfo> = {
+                name: (e.target as any).name.value,
+                company: (e.target as any).company.value,
+                department: (e.target as any).department.value,
+                position: (e.target as any).position.value,
+                email: (e.target as any).email.value,
+                phone: (e.target as any).phone.value,
+              };
+              handleProfileUpdate(updatedInfo);
+              setEditMode(false);
+            }}>
+              <input name="name" type="text" defaultValue={contactInfo.name} />
+              <input name="company" type="text" defaultValue={contactInfo.company} />
+              <input name="department" type="text" defaultValue={contactInfo.department} />
+              <input name="position" type="text" defaultValue={contactInfo.position} />
+              <input name="email" type="email" defaultValue={contactInfo.email} />
+              <input name="phone" type="tel" defaultValue={contactInfo.phone} />
+              <button type="submit">Save</button>
+              <button type="button" onClick={() => setEditMode(false)}>Cancel</button>
             </form>
           ) : (
             <div>
-              <p>{contactInfo.name}</p>
-              <p>{contactInfo.company}</p>
-              <p>{contactInfo.department}</p>
-              <p>{contactInfo.position}</p>
-              <p>{contactInfo.email}</p>
-              <p>{contactInfo.phone}</p>
-              <button onClick={() => setEditMode(true)}>수정</button>
+              <p><strong>Name:</strong> {contactInfo.name}</p>
+              <p><strong>Company:</strong> {contactInfo.company}</p>
+              <p><strong>Department:</strong> {contactInfo.department}</p>
+              <p><strong>Position:</strong> {contactInfo.position}</p>
+              <p><strong>Email:</strong> {contactInfo.email}</p>
+              <p><strong>Phone:</strong> {contactInfo.phone}</p>
+              <button onClick={() => setEditMode(true)}>Edit</button>
             </div>
           )}
         </div>
       )}
 
-      {/* 게시물 피드 */}
-      <div className="posts-wrapper">
+      <div className="posts-section">
+        <h2>My Posts</h2>
         <div className="sort-options">
-          <label>정렬 기준:</label>
+          <label>Sort by:</label>
           <select value={sortOption} onChange={handleSortChange}>
-            <option value="latest">최신순</option>
-            <option value="likes">좋아요순</option>
-            <option value="comments">댓글순</option>
+            <option value="latest">Latest</option>
+            <option value="likes">Most Liked</option>
+            <option value="comments">Most Commented</option>
           </select>
         </div>
-        {posts.map((post) => (
-          <div
-            key={post.postId}
-            className="post-card"
-            onClick={() => handlePostClick(post.postId)}
-          >
-            <img
-              src={processImageUrl(post.imageUrl)}
-              alt={`Post by ${post.createrName}`}
-              className="post-image"
-              onError={(e) => {
-                console.error("Image load error:", e);
-                (e.target as HTMLImageElement).src = "https://via.placeholder.com/300x200?text=No+Image";
-                (e.target as HTMLImageElement).alt = "Image load failed";
-              }}
-            />
-            <div className="post-info">
-              <p>{post.createrName}</p>
-              <p>{new Date(post.createdAt).toLocaleDateString()}</p>
+        <div className="posts-wrapper">
+          {posts.map((post) => (
+            <div key={post.postId} className="post-card" onClick={() => handlePostClick(post.postId)}>
+              <div className="post-header">
+                <h3>{post.createrName}</h3>
+                <p>{formatDate(post.createdAt)}</p>
+              </div>
+              <img
+                src={processImageUrl(post.imageUrl)}
+                alt={`Post by ${post.createrName}`}
+                className="post-image"
+                onError={(e) => {
+                  console.error("Image load error:", e);
+                  (e.target as HTMLImageElement).src = "https://via.placeholder.com/300x200?text=No+Image";
+                  (e.target as HTMLImageElement).alt = "Image load failed";
+                }}
+              />
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      {/* 비밀번호 변경 모달 */}
       {isPasswordModalOpen && (
         <div className="modal-overlay">
           <PasswordChange onClose={() => setIsPasswordModalOpen(false)} />
         </div>
       )}
 
-      {/* 게시물 상세 모달 */}
       {isModalOpen && selectedPostId && (
         <FeedDetail postId={selectedPostId} onClose={handleCloseModal} />
       )}
