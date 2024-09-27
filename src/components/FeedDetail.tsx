@@ -293,7 +293,18 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
   }
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
-
+  
+  const processImageUrl = (imageUrl: string) => {
+    if (!imageUrl) return '';
+    // URL이 이미 완전한 형태인 경우 그대로 반환
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    // 상대 경로인 경우 baseUrl과 결합
+    const processedUrl = `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl.replace(/\\/g, "/")}`;
+    return processedUrl;
+  };
+  
   return (
     <div className="modal">
       <div className="modal-content">
@@ -342,20 +353,18 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
           </div>
         ) : (
           <div>
-            {postDetail.imageUrl ? (
+            {postDetail.imageUrl && (
               <img
-                src={`${baseUrl}/posts/images/${postDetail.imageUrl
-                  .replace(/\\/g, "/")
-                  .replace(/^uploads\//, "")}`}
-                alt="Post"
+                src={processImageUrl(postDetail.imageUrl)}
+                alt={`Post by ${postDetail.createrName}`}
                 className="post-image"
                 onError={(e) => {
-                  e.currentTarget.src =
-                    "https://via.placeholder.com/600x400?text=No+Image"; // 경로를 실제 placeholder 이미지 경로로 수정
-                  e.currentTarget.alt = "Placeholder Image";
+                  console.error("Image load error:", e);
+                  (e.target as HTMLImageElement).src = "https://via.placeholder.com/600x400?text=No+Image";
+                  (e.target as HTMLImageElement).alt = "Image load failed";
                 }}
               />
-            ) : null}
+            )}
             <p>
               <strong>{postDetail.createrName}</strong>
             </p>
