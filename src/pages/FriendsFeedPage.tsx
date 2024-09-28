@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom"; // useParams 추가
+import { useParams, useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
-import "./FriendsFeedPage.css"; // 스타일 추가
-import FeedDetail from "../components/FeedDetail"; // 모달 컴포넌트 추가
+import "./FriendsFeedPage.css";
+import FeedDetail from "../components/FeedDetail";
 
 interface Post {
   postId: number;
@@ -12,68 +12,110 @@ interface Post {
   imageUrl: string;
 }
 
+interface Contact {
+  userId: string;
+  name: string;
+  company: string;
+  department: string;
+  position?: string;
+  email?: string;
+  phone?: string;
+}
+
 const FriendsFeedPage: React.FC = () => {
-  const { userId } = useParams<{ userId: string }>(); // URL 파라미터로 userId 받기
+  const { userId } = useParams<{ userId: string }>();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [contactInfo, setContactInfo] = useState<Contact | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPostId, setSelectedPostId] = useState<number | null>(null); // 선택된 게시물 ID 상태
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // 모달 상태
-  const [sortOption, setSortOption] = useState<string>("latest"); // 분류 기준 상태
+  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [sortOption, setSortOption] = useState<string>("latest");
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
-  // 토큰이 없는 경우 로그인 페이지로 리다이렉팅
   const isAuthenticated = !!localStorage.getItem("token");
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
+    } else {
+      fetchContactInfo();
+      fetchPosts();
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, userId, sortOption]);
 
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const response = await axiosInstance.get(
-          `/posts?filter=specific&specificUserId=${userId}&sort=${sortOption}` // 선택된 분류 기준 반영
-        );
-        setPosts(response.data.posts);
-      } catch (error) {
-        setError("게시물을 불러오는 중 문제가 발생했습니다.");
-        console.error("Error fetching posts:", error);
-      }
-    };
+  const fetchContactInfo = async () => {
+    try {
+      const response = await axiosInstance.get(`/contacts/${userId}`);
+      setContactInfo(response.data.contact);
+    } catch (error) {
+      console.error("Error fetching contact info:", error);
+      setError("Failed to load contact information.");
+    }
+  };
 
-    fetchPosts();
-  }, [userId, sortOption]); // sortOption이 변경될 때마다 게시물 재요청
+  const fetchPosts = async () => {
+    try {
+      const response = await axiosInstance.get(
+        `/posts?filter=specific&specificUserId=${userId}&sort=${sortOption}`
+      );
+      setPosts(response.data.posts);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+      setError("게시물을 불러오는 중 문제가 발생했습니다.");
+    }
+  };
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSortOption(e.target.value); // 분류 기준 변경
+    setSortOption(e.target.value);
   };
 
   const handlePostClick = (postId: number) => {
     setSelectedPostId(postId);
-    setIsModalOpen(true); // 모달 열기
+    setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedPostId(null); // 모달을 닫을 때 데이터 초기화
+    setSelectedPostId(null);
+  };
+
+  const processImageUrl = (imageUrl: string) => {
+    if (!imageUrl) return '';
+    if (imageUrl.startsWith('http') || imageUrl.startsWith('https')) {
+      return imageUrl;
+    }
+    return `${baseUrl}/${imageUrl.replace(/\\/g, "/")}`;
   };
 
   if (error) {
-    return <div>{error}</div>;
+    return <div className="error-message">{error}</div>;
   }
 
+
+  const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
   return (
     <div className="friends-feed-page">
-      <h1>친구의 피드</h1>
+      {contactInfo && (
+        <div className="contact-info">
+          <h2>{contactInfo.name}'s Feed</h2>
+          <p><strong>Company:</strong> {contactInfo.company}</p>
+          <p><strong>Department:</strong> {contactInfo.department}</p>
+          <p><strong>Position:</strong> {contactInfo.position || 'N/A'}</p>
+          <p><strong>Email:</strong> {contactInfo.email || 'N/A'}</p>
+          <p><strong>Phone:</strong> {contactInfo.phone || 'N/A'}</p>
+        </div>
+      )}
+
       <div className="sort-options">
-        <label>정렬 기준:</label>
+        <label>Sort by:</label>
         <select value={sortOption} onChange={handleSortChange}>
-          <option value="latest">최신순</option>
-          <option value="likes">좋아요순</option>
-          <option value="comments">댓글순</option>
+          <option value="latest">Latest</option>
+          <option value="likes">Most Liked</option>
+          <option value="comments">Most Commented</option>
         </select>
       </div>
 
@@ -83,21 +125,21 @@ const FriendsFeedPage: React.FC = () => {
             <div
               key={post.postId}
               className="post-card"
-              onClick={() => handlePostClick(post.postId)} // 게시물 클릭 시 모달 열기
+              onClick={() => handlePostClick(post.postId)}
             >
-              <h3>{post.createrName}</h3>
-              <p>{new Date(post.createdAt).toLocaleDateString()}</p>
+              <div className="post-header">
+                <h3>{post.createrName}</h3>
+                <p>{formatDate(post.createdAt)}</p>
+              </div>
               <img
-                src={`${baseUrl}/posts/images/${post.imageUrl
-                  .replace(/\\/g, "/")
-                  .replace(/^uploads\//, "")}`}
+                src={processImageUrl(post.imageUrl)}
                 alt="Post"
                 className="post-image"
               />
             </div>
           ))
         ) : (
-          <p>게시물이 없습니다.</p>
+          <p>No posts available.</p>
         )}
       </div>
 

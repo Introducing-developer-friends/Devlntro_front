@@ -1,30 +1,112 @@
-.feed-container {
-    padding: 20px;
-    text-align: center;
-  }
-  
-  .posts-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .post-card {
-    width: 600px;
-    margin-bottom: 20px;
-    padding: 15px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-  
-  .post-image {
-    width: 100%;
-    height: auto;
-  }
-  
-  .post-info {
-    margin-top: 10px;
-    text-align: left;
-  }
-  
+.friends-feed-page {
+  padding: 40px 20px;
+  max-width: 700px;
+  margin: 0 auto;
+  font-family: 'Arial', sans-serif;
+}
+
+.contact-info {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.contact-info h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.contact-info p {
+  margin: 8px 0;
+  color: #555;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.sort-options {
+  margin-bottom: 25px;
+  text-align: right;
+}
+
+.sort-options label {
+  font-size: 14px;
+  color: #666;
+  margin-right: 10px;
+}
+
+.sort-options select {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  color: #333;
+  background-color: #f8f8f8;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.sort-options select:hover {
+  border-color: #bbb;
+}
+
+.posts-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.post-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.post-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.post-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.post-header p {
+  margin: 0;
+  color: #888;
+  font-size: 14px;
+}
+
+.post-image {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.error-message {
+  color: #e74c3c;
+  background-color: #fdf3f2;
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 15px;
+  font-size: 14px;
+  text-align: center;
+}
