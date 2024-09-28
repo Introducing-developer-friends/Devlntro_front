@@ -1,21 +1,19 @@
 import axios from "axios";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { store } from '../redux/store';
+import { logout } from '../redux/userSlice';
 
-// Axios 인스턴스 생성
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 const axiosInstance = axios.create({
-  baseURL: baseUrl, // 백엔드 API의 기본 URL 설정
-  timeout: 5000, // 요청 타임아웃 설정 (밀리초 단위)
+  baseURL: baseUrl,
+  timeout: 5000,
   headers: {
-    "Content-Type": "application/json", // 기본 헤더 설정
+    "Content-Type": "application/json",
   },
 });
 
-// 요청 인터셉터 추가
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token"); // 로컬스토리지에서 토큰 가져오기
+    const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -26,16 +24,15 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// 응답 인터셉터 추가
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      console.error("Unauthorized access - redirecting to login...");
+      store.dispatch(logout());
+      // 여기서 로그인 페이지로 리다이렉트하는 로직을 추가할 수 있습니다.
     }
     return Promise.reject(error);
   }
 );
-
 
 export default axiosInstance;
