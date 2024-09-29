@@ -39,7 +39,8 @@ const MyPage: React.FC = () => {
   const [isPasswordModalOpen, setIsPasswordModalOpen] =
     useState<boolean>(false); // 비밀번호 모달 상태
   const [sortOption, setSortOption] = useState<string>("latest"); // 분류 기준 상태
-  const userId = useSelector((state: RootState) => state.user.userId);
+
+  const userId = useSelector((state: RootState) => state.user.userInfo?.userId);
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
   const navigate = useNavigate();
@@ -52,15 +53,21 @@ const MyPage: React.FC = () => {
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
-    // 명함 정보 불러오기
-    axiosInstance
-      .get(`/contacts/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
-        },
-      })
-      .then((response) => setContactInfo(response.data.contact))
-      .catch((error) => console.error(error));
+    if (userId) {
+      // axios를 사용해 백엔드로 GET 요청 전송
+      axiosInstance
+        .get(`/contacts/${userId}`)
+        .then((response) => {
+          console.log("Contact info response:", response.data);
+          setContactInfo(response.data.contact);
+        })
+        .catch((error) => {
+          console.error("Full error object:", error);
+          console.error("Error response:", error.response);
+          console.error("Error fetching contact info:", error.response?.data || error.message);
+          setError("명함 정보를 불러오는데 실패했습니다.");
+        });
+    }
   }, [userId]);
 
   useEffect(() => {
@@ -151,18 +158,22 @@ const MyPage: React.FC = () => {
   }
 
   const processImageUrl = (imageUrl: string) => {
-    if (!imageUrl) return '';
-    // URL이 이미 완전한 형태인 경우 그대로 반환
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    if (!imageUrl) return "";
+    if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
       return imageUrl;
     }
-    // 상대 경로인 경우 baseUrl과 결합
-    const processedUrl = `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl.replace(/\\/g, "/")}`;
-    return processedUrl;
+    return `${baseUrl}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl.replace(
+      /\\/g,
+      "/"
+    )}`;
   };
 
   const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
@@ -183,36 +194,64 @@ const MyPage: React.FC = () => {
         <div className="contact-info">
           <h2>My Profile</h2>
           {editMode ? (
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const updatedInfo: Partial<ContactInfo> = {
-                name: (e.target as any).name.value,
-                company: (e.target as any).company.value,
-                department: (e.target as any).department.value,
-                position: (e.target as any).position.value,
-                email: (e.target as any).email.value,
-                phone: (e.target as any).phone.value,
-              };
-              handleProfileUpdate(updatedInfo);
-              setEditMode(false);
-            }}>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const updatedInfo: Partial<ContactInfo> = {
+                  name: (e.target as any).name.value,
+                  company: (e.target as any).company.value,
+                  department: (e.target as any).department.value,
+                  position: (e.target as any).position.value,
+                  email: (e.target as any).email.value,
+                  phone: (e.target as any).phone.value,
+                };
+                handleProfileUpdate(updatedInfo);
+                setEditMode(false);
+              }}
+            >
               <input name="name" type="text" defaultValue={contactInfo.name} />
-              <input name="company" type="text" defaultValue={contactInfo.company} />
-              <input name="department" type="text" defaultValue={contactInfo.department} />
-              <input name="position" type="text" defaultValue={contactInfo.position} />
+              <input
+                name="company"
+                type="text"
+                defaultValue={contactInfo.company}
+              />
+              <input
+                name="department"
+                type="text"
+                defaultValue={contactInfo.department}
+              />
+              <input
+                name="position"
+                type="text"
+                defaultValue={contactInfo.position}
+              />
               <input name="email" type="email" defaultValue={contactInfo.email} />
               <input name="phone" type="tel" defaultValue={contactInfo.phone} />
               <button type="submit">Save</button>
-              <button type="button" onClick={() => setEditMode(false)}>Cancel</button>
+              <button type="button" onClick={() => setEditMode(false)}>
+                Cancel
+              </button>
             </form>
           ) : (
             <div>
-              <p><strong>Name:</strong> {contactInfo.name}</p>
-              <p><strong>Company:</strong> {contactInfo.company}</p>
-              <p><strong>Department:</strong> {contactInfo.department}</p>
-              <p><strong>Position:</strong> {contactInfo.position}</p>
-              <p><strong>Email:</strong> {contactInfo.email}</p>
-              <p><strong>Phone:</strong> {contactInfo.phone}</p>
+              <p>
+                <strong>Name:</strong> {contactInfo.name}
+              </p>
+              <p>
+                <strong>Company:</strong> {contactInfo.company}
+              </p>
+              <p>
+                <strong>Department:</strong> {contactInfo.department}
+              </p>
+              <p>
+                <strong>Position:</strong> {contactInfo.position}
+              </p>
+              <p>
+                <strong>Email:</strong> {contactInfo.email}
+              </p>
+              <p>
+                <strong>Phone:</strong> {contactInfo.phone}
+              </p>
               <button onClick={() => setEditMode(true)}>Edit</button>
             </div>
           )}
@@ -231,7 +270,11 @@ const MyPage: React.FC = () => {
         </div>
         <div className="posts-wrapper">
           {posts.map((post) => (
-            <div key={post.postId} className="post-card" onClick={() => handlePostClick(post.postId)}>
+            <div
+              key={post.postId}
+              className="post-card"
+              onClick={() => handlePostClick(post.postId)}
+            >
               <div className="post-header">
                 <h3>{post.createrName}</h3>
                 <p>{formatDate(post.createdAt)}</p>
@@ -242,7 +285,8 @@ const MyPage: React.FC = () => {
                 className="post-image"
                 onError={(e) => {
                   console.error("Image load error:", e);
-                  (e.target as HTMLImageElement).src = "https://via.placeholder.com/300x200?text=No+Image";
+                  (e.target as HTMLImageElement).src =
+                    "https://via.placeholder.com/300x200?text=No+Image";
                   (e.target as HTMLImageElement).alt = "Image load failed";
                 }}
               />
