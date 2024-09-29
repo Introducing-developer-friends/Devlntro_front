@@ -1,63 +1,76 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { login, logout } from "../redux/userSlice";
+import { login } from "../redux/userSlice";
 import { RootState, AppDispatch } from "../redux/store";
 import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
-import axios, { AxiosError } from "axios"; // axios 에러때문에 import
-import "./LoginPage.css"; // Import the CSS file
+import { AxiosError } from "axios";
+import "./LoginPage.css";
 
 const LoginPage: React.FC = () => {
-  const [loginId, setLoginId] = useState(""); // 로그인 시 입력하는 id
-  const [password, setPassword] = useState(""); // State for password
-  const passwordInputRef = useRef<HTMLInputElement>(null); // password 필드에 접근하기 위한 ref
-  const dispatch = useDispatch<AppDispatch>(); // Dispatch with correct type
+  // 로그인 ID, 비밀번호, 에러 메시지, 로딩 상태를 관리하는 state
+  const [loginId, setLoginId] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
-  const { isAuthenticated, userId } = useSelector(
+  // 리덕스에서 인증 상태를 가져옵니다.
+  const { isAuthenticated } = useSelector(
     (state: RootState) => state.user
   );
 
+  // 사용자가 이미 인증된 상태라면 피드 페이지로 리다이렉션
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/feed");
+    }
+  }, [isAuthenticated, navigate]);
+
+  // 로그인 버튼 클릭 시 실행되는 함수
   const handleLogin = async () => {
-    console.log("id : ", {loginId})
-    console.log("pw : ", {password})
+    setErrorMessage("");
+    setIsLoading(true);
     try {
+      // 서버에 로그인 요청을 보냅니다.
       const response = await axiosInstance.post("/auth/login", {
         login_id: loginId,
         password: password,
       });
 
-      // 로그인 성공 시 응답에서 userId 추출
-      const { userId } = response.data;
+      const { userId, token } = response.data;
 
-      // Redux 상태에 userId 저장
-      dispatch(login(userId));
-
-      // 추가적으로 JWT 토큰 저장 (예: 로컬스토리지)
-      localStorage.setItem("token", response.data.token);
-
-      // 로그인 성공 시 페이지 이동
-      navigate("/feed");
+      if (userId && token) {
+        // 로그인 성공 시 리덕스 상태와 axios 기본 헤더를 업데이트하고 피드 페이지로 이동합니다.
+        dispatch(login({ userId: Number(userId), token }));
+        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        navigate("/feed");
+      } else {
+        setErrorMessage("Invalid response from server. Please try again.");
+      }
     } catch (error) {
       if (error instanceof AxiosError) {
-        console.error(
-          "로그인 실패:",
-          error.response?.data?.message || error.message
-        );
+        // 에러 발생 시 적절한 에러 메시지를 설정
+        setErrorMessage(error.response?.data?.message || "Login failed. Please check your credentials.");
       } else {
-        console.error("알 수 없는 오류:", error);
+        setErrorMessage("An unknown error occurred. Please try again.");
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // 엔터 키를 눌렀을 때 로그인
+  // Enter 키를 눌러 로그인 요청을 보냅니다.
   const handleKeyPressForLogin = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
       handleLogin();
     }
   };
 
-  // 엔터 키를 눌렀을 때 탭 이동
+  // Enter 키를 눌러 비밀번호 입력란으로 포커스를 이동
   const handleKeyPressForTab = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter" && passwordInputRef.current) {
       passwordInputRef.current.focus();
@@ -73,41 +86,39 @@ const LoginPage: React.FC = () => {
       </div>
       <div className="login-box">
         <h2>Login</h2>
-        {isAuthenticated ? (
-          <>
-            <span>환영합니다, {userId}님</span>
-            <button onClick={() => dispatch(logout())}>로그아웃</button>
-          </>
-        ) : (
-          <>
-            <input
-              type="text"
-              placeholder="아이디"
-              value={loginId}
-              onChange={(e) => setLoginId(e.target.value)}
-              onKeyDown={handleKeyPressForTab} // 엔터 키 이벤트 추가
-              className="login-input"
-            />
-            <input
-              type="password"
-              placeholder="비밀번호"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={handleKeyPressForLogin} // 엔터 키 이벤트 추가
-              ref={passwordInputRef}
-              className="login-input"
-            />
-            <button onClick={handleLogin} className="login-button">
-              확인
-            </button>
-            <p className="signup-prompt">
-              아직 회원이 아니신가요?{" "}
-              <Link to="/signup" className="signup-link">
-                회원가입
-              </Link>
-            </p>
-          </>
-        )}
+        {errorMessage && <p className="error-message">{errorMessage}</p>}
+        <input
+          type="text"
+          placeholder="아이디"
+          value={loginId}
+          onChange={(e) => setLoginId(e.target.value)}
+          onKeyDown={handleKeyPressForTab}
+          className="login-input"
+          disabled={isLoading}
+        />
+        <input
+          type="password"
+          placeholder="비밀번호"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={handleKeyPressForLogin}
+          ref={passwordInputRef}
+          className="login-input"
+          disabled={isLoading}
+        />
+        <button 
+          onClick={handleLogin} 
+          className="login-button"
+          disabled={isLoading}
+        >
+          {isLoading ? "로그인 중..." : "확인"}
+        </button>
+        <p className="signup-prompt">
+          아직 회원이 아니신가요?{" "}
+          <Link to="/signup" className="signup-link">
+            회원가입
+          </Link>
+        </p>
       </div>
     </div>
   );

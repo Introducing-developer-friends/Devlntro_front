@@ -39,7 +39,8 @@ const MyPage: React.FC = () => {
   const [isPasswordModalOpen, setIsPasswordModalOpen] =
     useState<boolean>(false); // 비밀번호 모달 상태
   const [sortOption, setSortOption] = useState<string>("latest"); // 분류 기준 상태
-  const userId = useSelector((state: RootState) => state.user.userId);
+
+  const userId = useSelector((state: RootState) => state.user.userInfo?.userId);
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
   const navigate = useNavigate();
@@ -52,15 +53,21 @@ const MyPage: React.FC = () => {
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
-    // 명함 정보 불러오기
-    axiosInstance
-      .get(`/contacts/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
-        },
-      })
-      .then((response) => setContactInfo(response.data.contact))
-      .catch((error) => console.error(error));
+    if (userId) {
+      // axios를 사용해 백엔드로 GET 요청 전송
+      axiosInstance
+        .get(`/contacts/${userId}`)
+        .then((response) => {
+          console.log("Contact info response:", response.data);
+          setContactInfo(response.data.contact);
+        })
+        .catch((error) => {
+          console.error("Full error object:", error);
+          console.error("Error response:", error.response);
+          console.error("Error fetching contact info:", error.response?.data || error.message);
+          setError("명함 정보를 불러오는데 실패했습니다.");
+        });
+    }
   }, [userId]);
 
   useEffect(() => {
@@ -102,16 +109,27 @@ const MyPage: React.FC = () => {
   const handleAccountDeletion = (password: string | null) => {
     if (window.confirm("정말로 탈퇴하시겠습니까?")) {
       axiosInstance
-        .delete("/users", {
+        .delete("/users/password", {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // JWT 토큰 헤더 추가
           },
-          data: { password },
+          data: { password }, // 사용자가 입력한 비밀번호 포함
         })
-        .then((response) => alert(response.data.message))
-        .catch((error) => alert(error.response.data.message));
+        .then((response) => {
+          alert(response.data.message || "회원 탈퇴가 완료되었습니다.");
+          handleLogout(); // 탈퇴 성공 시 로그아웃 처리
+        })
+        .catch((error) => {
+          if (error.response) {
+            alert(error.response.data.message || "탈퇴 중 문제가 발생했습니다.");
+          } else {
+            alert("서버와의 연결에 문제가 있습니다. 다시 시도해 주세요.");
+          }
+        });
     }
   };
+  
+  
 
   const handleLogout = () => {
     console.log("잘 작동!!!");
@@ -126,8 +144,17 @@ const MyPage: React.FC = () => {
           Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
         },
       })
-      .then((response) => alert(response.data.message))
-      .catch((error) => alert(error.response.data.message));
+      .then((response) => {
+        alert(response.data.message);
+        // 프로필 정보가 성공적으로 업데이트되면 contactInfo 상태를 갱신하여 새로고침 없이 UI 업데이트
+        setContactInfo((prev) => {
+          return prev ? { ...prev, ...updatedInfo } : null;
+        });
+        setEditMode(false); // 수정 모드를 종료
+      })
+      .catch((error) => {
+        alert(error.response.data.message);
+      });
   };
 
   useEffect(() => {
@@ -151,18 +178,22 @@ const MyPage: React.FC = () => {
   }
 
   const processImageUrl = (imageUrl: string) => {
-    if (!imageUrl) return '';
-    // URL이 이미 완전한 형태인 경우 그대로 반환
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    if (!imageUrl) return "";
+    if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
       return imageUrl;
     }
-    // 상대 경로인 경우 baseUrl과 결합
-    const processedUrl = `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl.replace(/\\/g, "/")}`;
-    return processedUrl;
+    return `${baseUrl}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl.replace(
+      /\\/g,
+      "/"
+    )}`;
   };
 
   const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
@@ -183,7 +214,8 @@ const MyPage: React.FC = () => {
         <div className="contact-info">
           <h2>My Profile</h2>
           {editMode ? (
-            <form onSubmit={(e) => {
+            <form
+            onSubmit={(e) => {
               e.preventDefault();
               const updatedInfo: Partial<ContactInfo> = {
                 name: (e.target as any).name.value,
@@ -193,26 +225,39 @@ const MyPage: React.FC = () => {
                 email: (e.target as any).email.value,
                 phone: (e.target as any).phone.value,
               };
+              // 프로필 정보를 업데이트하고 UI에 즉시 반영
               handleProfileUpdate(updatedInfo);
-              setEditMode(false);
-            }}>
-              <input name="name" type="text" defaultValue={contactInfo.name} />
-              <input name="company" type="text" defaultValue={contactInfo.company} />
-              <input name="department" type="text" defaultValue={contactInfo.department} />
-              <input name="position" type="text" defaultValue={contactInfo.position} />
-              <input name="email" type="email" defaultValue={contactInfo.email} />
-              <input name="phone" type="tel" defaultValue={contactInfo.phone} />
-              <button type="submit">Save</button>
-              <button type="button" onClick={() => setEditMode(false)}>Cancel</button>
-            </form>
+            }}
+          >
+            <input name="name" type="text" defaultValue={contactInfo.name} />
+            <input name="company" type="text" defaultValue={contactInfo.company} />
+            <input name="department" type="text" defaultValue={contactInfo.department} />
+            <input name="position" type="text" defaultValue={contactInfo.position} />
+            <input name="email" type="email" defaultValue={contactInfo.email} />
+            <input name="phone" type="tel" defaultValue={contactInfo.phone} />
+            <button type="submit">Save</button>
+            <button type="button" onClick={() => setEditMode(false)}>Cancel</button>
+          </form>          
           ) : (
             <div>
-              <p><strong>Name:</strong> {contactInfo.name}</p>
-              <p><strong>Company:</strong> {contactInfo.company}</p>
-              <p><strong>Department:</strong> {contactInfo.department}</p>
-              <p><strong>Position:</strong> {contactInfo.position}</p>
-              <p><strong>Email:</strong> {contactInfo.email}</p>
-              <p><strong>Phone:</strong> {contactInfo.phone}</p>
+              <p>
+                <strong>Name:</strong> {contactInfo.name}
+              </p>
+              <p>
+                <strong>Company:</strong> {contactInfo.company}
+              </p>
+              <p>
+                <strong>Department:</strong> {contactInfo.department}
+              </p>
+              <p>
+                <strong>Position:</strong> {contactInfo.position}
+              </p>
+              <p>
+                <strong>Email:</strong> {contactInfo.email}
+              </p>
+              <p>
+                <strong>Phone:</strong> {contactInfo.phone}
+              </p>
               <button onClick={() => setEditMode(true)}>Edit</button>
             </div>
           )}
@@ -231,7 +276,11 @@ const MyPage: React.FC = () => {
         </div>
         <div className="posts-wrapper">
           {posts.map((post) => (
-            <div key={post.postId} className="post-card" onClick={() => handlePostClick(post.postId)}>
+            <div
+              key={post.postId}
+              className="post-card"
+              onClick={() => handlePostClick(post.postId)}
+            >
               <div className="post-header">
                 <h3>{post.createrName}</h3>
                 <p>{formatDate(post.createdAt)}</p>
@@ -242,7 +291,8 @@ const MyPage: React.FC = () => {
                 className="post-image"
                 onError={(e) => {
                   console.error("Image load error:", e);
-                  (e.target as HTMLImageElement).src = "https://via.placeholder.com/300x200?text=No+Image";
+                  (e.target as HTMLImageElement).src =
+                    "https://via.placeholder.com/300x200?text=No+Image";
                   (e.target as HTMLImageElement).alt = "Image load failed";
                 }}
               />
