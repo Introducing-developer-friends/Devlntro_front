@@ -109,16 +109,27 @@ const MyPage: React.FC = () => {
   const handleAccountDeletion = (password: string | null) => {
     if (window.confirm("정말로 탈퇴하시겠습니까?")) {
       axiosInstance
-        .delete("/users", {
+        .delete("/users/password", {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // JWT 토큰 헤더 추가
           },
-          data: { password },
+          data: { password }, // 사용자가 입력한 비밀번호 포함
         })
-        .then((response) => alert(response.data.message))
-        .catch((error) => alert(error.response.data.message));
+        .then((response) => {
+          alert(response.data.message || "회원 탈퇴가 완료되었습니다.");
+          handleLogout(); // 탈퇴 성공 시 로그아웃 처리
+        })
+        .catch((error) => {
+          if (error.response) {
+            alert(error.response.data.message || "탈퇴 중 문제가 발생했습니다.");
+          } else {
+            alert("서버와의 연결에 문제가 있습니다. 다시 시도해 주세요.");
+          }
+        });
     }
   };
+  
+  
 
   const handleLogout = () => {
     console.log("잘 작동!!!");
