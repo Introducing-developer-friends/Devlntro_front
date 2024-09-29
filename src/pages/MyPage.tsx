@@ -133,8 +133,17 @@ const MyPage: React.FC = () => {
           Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
         },
       })
-      .then((response) => alert(response.data.message))
-      .catch((error) => alert(error.response.data.message));
+      .then((response) => {
+        alert(response.data.message);
+        // 프로필 정보가 성공적으로 업데이트되면 contactInfo 상태를 갱신하여 새로고침 없이 UI 업데이트
+        setContactInfo((prev) => {
+          return prev ? { ...prev, ...updatedInfo } : null;
+        });
+        setEditMode(false); // 수정 모드를 종료
+      })
+      .catch((error) => {
+        alert(error.response.data.message);
+      });
   };
 
   useEffect(() => {
@@ -195,43 +204,29 @@ const MyPage: React.FC = () => {
           <h2>My Profile</h2>
           {editMode ? (
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const updatedInfo: Partial<ContactInfo> = {
-                  name: (e.target as any).name.value,
-                  company: (e.target as any).company.value,
-                  department: (e.target as any).department.value,
-                  position: (e.target as any).position.value,
-                  email: (e.target as any).email.value,
-                  phone: (e.target as any).phone.value,
-                };
-                handleProfileUpdate(updatedInfo);
-                setEditMode(false);
-              }}
-            >
-              <input name="name" type="text" defaultValue={contactInfo.name} />
-              <input
-                name="company"
-                type="text"
-                defaultValue={contactInfo.company}
-              />
-              <input
-                name="department"
-                type="text"
-                defaultValue={contactInfo.department}
-              />
-              <input
-                name="position"
-                type="text"
-                defaultValue={contactInfo.position}
-              />
-              <input name="email" type="email" defaultValue={contactInfo.email} />
-              <input name="phone" type="tel" defaultValue={contactInfo.phone} />
-              <button type="submit">Save</button>
-              <button type="button" onClick={() => setEditMode(false)}>
-                Cancel
-              </button>
-            </form>
+            onSubmit={(e) => {
+              e.preventDefault();
+              const updatedInfo: Partial<ContactInfo> = {
+                name: (e.target as any).name.value,
+                company: (e.target as any).company.value,
+                department: (e.target as any).department.value,
+                position: (e.target as any).position.value,
+                email: (e.target as any).email.value,
+                phone: (e.target as any).phone.value,
+              };
+              // 프로필 정보를 업데이트하고 UI에 즉시 반영
+              handleProfileUpdate(updatedInfo);
+            }}
+          >
+            <input name="name" type="text" defaultValue={contactInfo.name} />
+            <input name="company" type="text" defaultValue={contactInfo.company} />
+            <input name="department" type="text" defaultValue={contactInfo.department} />
+            <input name="position" type="text" defaultValue={contactInfo.position} />
+            <input name="email" type="email" defaultValue={contactInfo.email} />
+            <input name="phone" type="tel" defaultValue={contactInfo.phone} />
+            <button type="submit">Save</button>
+            <button type="button" onClick={() => setEditMode(false)}>Cancel</button>
+          </form>          
           ) : (
             <div>
               <p>
