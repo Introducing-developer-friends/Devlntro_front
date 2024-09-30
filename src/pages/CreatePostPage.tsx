@@ -20,25 +20,24 @@ const CreatePostPage: React.FC = () => {
       setError("내용과 이미지를 업로드해주세요.");
       return;
     }
-
+  
     try {
-      // 이미지 및 내용 추가
       const formData = new FormData();
       formData.append("image", imageFile);
       formData.append("content", content);
-
-      // 서버로 게시물 작성 및 이미지 업로드 요청
+  
       const response = await axiosInstance.post("/posts", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // "JWT_TOKEN"을 "token"으로 변경
         },
       });
-
+  
       if (response.status === 201) {
-          navigate("/feed"); // 성공적으로 작성 후 피드 페이지로 이동
+        navigate("/feed");
       }
     } catch (error) {
+      console.error("Error creating post:", error);
       setError("게시물 작성에 실패했습니다. 다시 시도해주세요.");
     }
   };

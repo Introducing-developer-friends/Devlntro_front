@@ -9,7 +9,7 @@ interface Post {
   createrId: number;
   createrName: string;
   createdAt: string;
-  imageUrl: string;
+  imageUrl: string | null; // imageUrl이 null일 수 있음
   isOwnPost: boolean;
   likesCount?: number;
   commentsCount?: number;
@@ -46,7 +46,6 @@ const FeedPage: React.FC = () => {
         console.log("Fetched posts:", response.data.posts);
         response.data.posts.forEach((post: Post) => {
           console.log(`Post ${post.postId} details:`, JSON.stringify(post, null, 2));
-          console.log(`Processed Image URL for post ${post.postId}:`, processImageUrl(post.imageUrl));
         });
         setPosts(response.data.posts);
       } catch (error) {
@@ -73,18 +72,14 @@ const FeedPage: React.FC = () => {
   };
 
 
-  const serverUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-
+  
   const processImageUrl = (imageUrl: string) => {
     if (!imageUrl) return '';
-  
-    // URL이 이미 완전한 형태인 경우 그대로 반환
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      return imageUrl;
-    }
-
-    // 상대 경로인 경우 baseUrl과 결합
-    return `${serverUrl}/${imageUrl.replace(/\\/g, "/")}`;
+    
+    // 이미지 URL의 특수 문자 인코딩 처리
+    const encodedUrl = encodeURI(imageUrl);
+    console.log("Processed Image URL:", encodedUrl);
+    return encodedUrl; // 인코딩된 S3 URL을 반환
   };
 
   if (error) {
