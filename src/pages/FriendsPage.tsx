@@ -30,7 +30,7 @@ const FriendsPage: React.FC = () => {
   const [newContactId, setNewContactId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'contacts' | 'received' | 'sent'>('contacts');
+  // const [activeTab, setActiveTab] = useState<'contacts' | 'received' | 'sent'>('contacts');
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -142,7 +142,7 @@ const FriendsPage: React.FC = () => {
       fetchReceivedRequests();
       setNotification("수락했습니다.");
       setTimeout(() => setNotification(null), 3000);
-      setActiveTab('contacts');
+      // setActiveTab('contacts');
     } catch (error) {
       console.error("Error accepting request:", error);
       setError("Failed to accept request. Please try again.");

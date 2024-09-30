@@ -23,8 +23,6 @@ const FeedPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const navigate = useNavigate();
 
-  const baseUrl = import.meta.env.VITE_API_BASE_URL;
-
   const isAuthenticated = !!localStorage.getItem('token');
 
   useEffect(() => {
@@ -75,15 +73,18 @@ const FeedPage: React.FC = () => {
   };
 
 
+  const serverUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
   const processImageUrl = (imageUrl: string) => {
     if (!imageUrl) return '';
+  
     // URL이 이미 완전한 형태인 경우 그대로 반환
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       return imageUrl;
     }
+
     // 상대 경로인 경우 baseUrl과 결합
-    const processedUrl = `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl.replace(/\\/g, "/")}`;
-    return processedUrl;
+    return `${serverUrl}/${imageUrl.replace(/\\/g, "/")}`;
   };
 
   if (error) {
