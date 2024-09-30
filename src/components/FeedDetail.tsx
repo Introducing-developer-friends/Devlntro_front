@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef  } from "react";
 import axiosInstance from "../api/axiosInstance";
 import "./FeedDetail.css";
 
@@ -36,35 +36,33 @@ interface FeedDetailProps {
 }
 
 const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
-  const [postDetail, setPostDetail] = useState<PostDetail | null>(null); // 게시글 상세보기 데이터
+  const [postDetail, setPostDetail] = useState<PostDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState<boolean>(false); // 게시물 수정 상태
-  const [content, setContent] = useState<string>(""); // 불러올 게시글
-  const [imageUrl, setImageUrl] = useState<string>(""); // 불러올 이미지 url
-  const [newComment, setNewComment] = useState<string>(""); // 댓글
-  const [isEditingCommentId, setIsEditingCommentId] = useState<number | null>(
-    null
-  ); // 수정 중인 댓글 id
-  const [editedCommentContent, setEditedCommentContent] = useState<string>(""); // 수정할 댓글 내용
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [content, setContent] = useState<string>("");
+  const [file, setFile] = useState<File | null>(null);
+  const [newComment, setNewComment] = useState<string>("");
+  const [isEditingCommentId, setIsEditingCommentId] = useState<number | null>(null);
+  const [editedCommentContent, setEditedCommentContent] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const fetchPostDetail = async () => {
-      try {
-        const response = await axiosInstance.get(`/posts/${postId}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
-          },
-        });
-        setPostDetail(response.data);
-        setContent(response.data.content);
-        setImageUrl(response.data.imageUrl);
-      } catch (error) {
-        setError("게시물 정보를 불러오는 중 문제가 발생했습니다.");
-      }
-    };
-
     fetchPostDetail();
   }, [postId]);
+
+  const fetchPostDetail = async () => {
+    try {
+      const response = await axiosInstance.get(`/posts/${postId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+        },
+      });
+      setPostDetail(response.data);
+      setContent(response.data.content);
+    } catch (error) {
+      setError("게시물 정보를 불러오는 중 문제가 발생했습니다.");
+    }
+  };
 
   const handleEditClick = () => {
     if (postDetail?.isOwnPost) {
@@ -73,10 +71,7 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
   };
 
   const handleDeleteClick = async () => {
-    if (
-      postDetail?.isOwnPost &&
-      window.confirm("정말로 게시물을 삭제하시겠습니까?")
-    ) {
+    if (postDetail?.isOwnPost && window.confirm("정말로 게시물을 삭제하시겠습니까?")) {
       try {
         await axiosInstance.delete(`/posts/${postId}`, {
           headers: {
@@ -85,35 +80,34 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
         });
         alert("게시물이 삭제되었습니다.");
         onClose();
-        window.location.reload();
       } catch (error) {
         setError("게시물 삭제에 실패했습니다.");
       }
     }
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setFile(event.target.files[0]);
+    }
+  };
+
   const handleSaveChanges = async () => {
     try {
-      await axiosInstance.put(
-        `/posts/${postId}`,
-        {
-          content,
-          imageUrl,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
-          },
-        }
-      );
-      setIsEditing(false);
-      // 게시물 상세 다시 가져오기
-      const response = await axiosInstance.get(`/posts/${postId}`, {
+      const formData = new FormData();
+      formData.append('content', content);
+      if (file) {
+        formData.append('image', file);
+      }
+
+      await axiosInstance.put(`/posts/${postId}`, formData, {
         headers: {
+          'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
         },
       });
-      setPostDetail(response.data);
+      setIsEditing(false);
+      fetchPostDetail();
     } catch (error) {
       setError("게시물 수정에 실패했습니다.");
     }
@@ -121,81 +115,57 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
 
   const handleLikeClick = async () => {
     try {
-      const response = await axiosInstance.post(
-        `/posts/${postId}/like`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
-          },
-        }
-      );
-      const updatedPostDetail = {
-        ...postDetail!,
+      const response = await axiosInstance.post(`/posts/${postId}/like`, {}, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+        },
+      });
+      setPostDetail(prev => prev ? {
+        ...prev,
         likesCount: response.data.likeCount,
         userHasLiked: true,
-      };
-      setPostDetail(updatedPostDetail);
+      } : null);
     } catch (error) {
       setError("좋아요 처리에 실패했습니다.");
     }
   };
 
-  // 댓글 작성 함수
   const handleAddComment = async () => {
-    if (!newComment) {
+    if (!newComment.trim()) {
       alert("댓글 내용을 입력해주세요.");
       return;
     }
 
     try {
-      const response = await axiosInstance.post(
-        `/posts/${postId}/comments`,
-        { content: newComment },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
-          },
-        }
-      );
-      const newCommentData = {
-        commentId: response.data.commentId,
-        authorName: "현재 사용자 이름", // 사용자 이름을 적절히 설정하세요.
-        content: newComment,
-        createdAt: new Date().toISOString(),
-        likeCount: 0,
-      };
-      setPostDetail((prev) => {
-        if (prev) {
-          return {
-            ...prev,
-            comments: [...prev.comments, newCommentData],
-            commentsCount: prev.commentsCount + 1,
-          };
-        }
-        return prev;
+      const response = await axiosInstance.post(`/posts/${postId}/comments`, { content: newComment }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+        },
       });
+      setPostDetail(prev => prev ? {
+        ...prev,
+        comments: [...prev.comments, response.data],
+        commentsCount: prev.commentsCount + 1,
+      } : null);
       setNewComment("");
     } catch (error) {
       setError("댓글 작성에 실패했습니다.");
     }
   };
 
-  // 댓글 수정 함수
   const handleEditComment = (comment: Comment) => {
     setIsEditingCommentId(comment.commentId);
     setEditedCommentContent(comment.content);
   };
 
   const handleSaveCommentChanges = async () => {
-    if (!editedCommentContent) {
+    if (!editedCommentContent.trim()) {
       alert("댓글 내용을 입력해주세요.");
       return;
     }
 
     try {
-      await axiosInstance.put(
-        `/posts/${postId}/comments/${isEditingCommentId}`,
+      const response = await axiosInstance.put(`/posts/${postId}/comments/${isEditingCommentId}`, 
         { content: editedCommentContent },
         {
           headers: {
@@ -203,27 +173,19 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
           },
         }
       );
-      setPostDetail((prev) => {
-        if (prev) {
-          const updatedComments = prev.comments.map((comment) => {
-            if (comment.commentId === isEditingCommentId) {
-              return { ...comment, content: editedCommentContent };
-            }
-            return comment;
-          });
-          return { ...prev, comments: updatedComments };
-        }
-        return prev;
-      });
+      setPostDetail(prev => prev ? {
+        ...prev,
+        comments: prev.comments.map(comment => 
+          comment.commentId === isEditingCommentId ? response.data : comment
+        ),
+      } : null);
       setIsEditingCommentId(null);
       setEditedCommentContent("");
-      alert("댓글이 수정되었습니다.");
     } catch (error) {
       setError("댓글 수정에 실패했습니다.");
     }
   };
 
-  // 댓글 삭제 함수
   const handleDeleteComment = async (commentId: number) => {
     if (window.confirm("정말로 댓글을 삭제하시겠습니까?")) {
       try {
@@ -232,194 +194,128 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
             Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
           },
         });
-        setPostDetail((prev) => {
-          if (prev) {
-            return {
-              ...prev,
-              comments: prev.comments.filter(
-                (comment) => comment.commentId !== commentId
-              ),
-              commentsCount: prev.commentsCount - 1,
-            };
-          }
-          return prev;
-        });
-        alert("댓글이 삭제되었습니다.");
+        setPostDetail(prev => prev ? {
+          ...prev,
+          comments: prev.comments.filter(comment => comment.commentId !== commentId),
+          commentsCount: prev.commentsCount - 1,
+        } : null);
       } catch (error) {
         setError("댓글 삭제에 실패했습니다.");
       }
     }
   };
 
-  // 댓글 좋아요 함수
   const handleLikeComment = async (commentId: number) => {
     try {
-      const response = await axiosInstance.post(
-        `/posts/${postId}/comments/${commentId}/like`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
-          },
-        }
-      );
-      setPostDetail((prev) => {
-        if (prev) {
-          const updatedComments = prev.comments.map((comment) => {
-            if (comment.commentId === commentId) {
-              return {
-                ...comment,
-                likeCount: response.data.likeCount,
-              };
-            }
-            return comment;
-          });
-          return { ...prev, comments: updatedComments };
-        }
-        return prev;
+      const response = await axiosInstance.post(`/posts/${postId}/comments/${commentId}/like`, {}, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+        },
       });
-      alert(response.data.message);
+      setPostDetail(prev => prev ? {
+        ...prev,
+        comments: prev.comments.map(comment => 
+          comment.commentId === commentId ? { ...comment, likeCount: response.data.likeCount } : comment
+        ),
+      } : null);
     } catch (error) {
       setError("댓글 좋아요 처리에 실패했습니다.");
     }
   };
 
-  if (error) {
-    return <div>{error}</div>;
-  }
+  if (error) return <div className="error-message">{error}</div>;
+  if (!postDetail) return <div className="loading-message">로딩 중...</div>;
+    
 
-  if (!postDetail) {
-    return <div>로딩 중...</div>;
-  }
 
-  const baseUrl = import.meta.env.VITE_API_BASE_URL;
-  
-  const processImageUrl = (imageUrl: string) => {
-    if (!imageUrl) return '';
-    // URL이 이미 완전한 형태인 경우 그대로 반환
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      return imageUrl;
-    }
-    // 상대 경로인 경우 baseUrl과 결합
-    const processedUrl = `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl.replace(/\\/g, "/")}`;
-    return processedUrl;
-  };
-  
   return (
     <div className="modal">
       <div className="modal-content">
         <div className="modal-header">
-          <div className="actions-menu">
-            {postDetail.isOwnPost ? (
-              <span className="actions-button">...</span>
-            ) : (
-              // 투명한 빈 박스 추가
-              <span className="transparent-box"></span>
-            )}
-            {postDetail.isOwnPost && (
-              <div className="actions-dropdown">
-                <button onClick={handleEditClick}>수정</button>
-                <button onClick={handleDeleteClick}>삭제</button>
-              </div>
-            )}
-          </div>
-          <span className="close" onClick={onClose}>
-            &times;
-          </span>
+          <h2>{postDetail.createrName}의 게시물</h2>
+          <span className="close" onClick={onClose}>&times;</span>
         </div>
         {isEditing ? (
-          <div>
-            <h2>게시물 수정</h2>
+          <div className="edit-form">
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               className="post-content-edit"
             />
             <input
-              type="text"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              className="post-image-url-edit"
+              type="file"
+              onChange={handleFileChange}
+              ref={fileInputRef}
+              className="file-input"
             />
-            <button onClick={handleSaveChanges} className="submit-button">
-              저장
-            </button>
-            <button
-              onClick={() => setIsEditing(false)}
-              className="cancel-button"
-            >
-              취소
-            </button>
+            <div className="button-group">
+              <button onClick={handleSaveChanges} className="submit-button">저장</button>
+              <button onClick={() => setIsEditing(false)} className="cancel-button">취소</button>
+            </div>
           </div>
         ) : (
-          <div>
-            {postDetail.imageUrl && (
-              <img
-                src={processImageUrl(postDetail.imageUrl)}
-                alt={`Post by ${postDetail.createrName}`}
-                className="post-image"
-                onError={(e) => {
-                  console.error("Image load error:", e);
-                  (e.target as HTMLImageElement).src = "https://via.placeholder.com/600x400?text=No+Image";
-                  (e.target as HTMLImageElement).alt = "Image load failed";
-                }}
-              />
-            )}
-            <p>
-              <strong>{postDetail.createrName}</strong>
-            </p>
-            <p>{new Date(postDetail.createdAt).toLocaleString()}</p>
-            <p>{postDetail.content}</p>
-            <p>좋아요 {postDetail.likesCount}개</p>
-            {!postDetail.userHasLiked && (
-              <button onClick={handleLikeClick}>좋아요</button>
-            )}
-            <h3>댓글 ({postDetail.commentsCount})</h3>
-            <div className="comments">
+          <div className="post-detail">
+            <div className="image-container">
+              {postDetail.imageUrl && (
+                <img
+                  src={postDetail.imageUrl}
+                  alt={`Post by ${postDetail.createrName}`}
+                  className="post-image"
+                />
+              )}
+            </div>
+            <p className="post-content">{postDetail.content}</p>
+            <p className="post-date">{new Date(postDetail.createdAt).toLocaleString()}</p>
+            <div className="post-actions">
+              <span>좋아요 {postDetail.likesCount}개</span>
+              {!postDetail.userHasLiked && (
+                <button onClick={handleLikeClick} className="like-button">좋아요</button>
+              )}
+              {postDetail.isOwnPost && (
+                <>
+                  <button onClick={handleEditClick} className="edit-button">수정</button>
+                  <button onClick={handleDeleteClick} className="delete-button">삭제</button>
+                </>
+              )}
+            </div>
+            <div className="comments-section">
+              <h3>댓글 ({postDetail.commentsCount})</h3>
               {postDetail.comments.map((comment) => (
                 <div key={comment.commentId} className="comment">
                   <strong>{comment.authorName}</strong>
-                  <p>
-                    {isEditingCommentId === comment.commentId ? (
-                      <div>
-                        <textarea
-                          value={editedCommentContent}
-                          onChange={(e) =>
-                            setEditedCommentContent(e.target.value)
-                          }
-                        />
-                        <button onClick={handleSaveCommentChanges}>저장</button>
-                      </div>
-                    ) : (
-                      <>
-                        <span>{comment.content}</span>
-                        <button onClick={() => handleEditComment(comment)}>
-                          수정
-                        </button>
-                        <button
-                          onClick={() => handleDeleteComment(comment.commentId)}
-                        >
-                          삭제
-                        </button>
-                        <button
-                          onClick={() => handleLikeComment(comment.commentId)}
-                        >
+                  {isEditingCommentId === comment.commentId ? (
+                    <div>
+                      <textarea
+                        value={editedCommentContent}
+                        onChange={(e) => setEditedCommentContent(e.target.value)}
+                      />
+                      <button onClick={handleSaveCommentChanges}>저장</button>
+                    </div>
+                  ) : (
+                    <>
+                      <p>{comment.content}</p>
+                      <div className="comment-actions">
+                        <button onClick={() => handleEditComment(comment)}>수정</button>
+                        <button onClick={() => handleDeleteComment(comment.commentId)}>삭제</button>
+                        <button onClick={() => handleLikeComment(comment.commentId)}>
                           좋아요 {comment.likeCount}
                         </button>
-                      </>
-                    )}
-                  </p>
-                  <span>{comment.createdAt}</span>
+                      </div>
+                    </>
+                  )}
+                  <span className="comment-date">{new Date(comment.createdAt).toLocaleString()}</span>
                 </div>
               ))}
             </div>
-            <input
-              type="text"
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="댓글 추가..."
-            />
-            <button onClick={handleAddComment}>댓글 추가</button>
+            <div className="add-comment">
+              <input
+                type="text"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="댓글 추가..."
+              />
+              <button onClick={handleAddComment}>댓글 추가</button>
+            </div>
           </div>
         )}
       </div>
