@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef  } from "react";
 import axiosInstance from "../api/axiosInstance";
+import { useSelector } from 'react-redux';
 import "./FeedDetail.css";
+import { RootState } from '../redux/store'; // 리덕스 스토어 타입 import
 
 interface Comment {
   commentId: number;
@@ -46,15 +48,21 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
   const [editedCommentContent, setEditedCommentContent] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const { isAuthenticated, userInfo } = useSelector((state: RootState) => state.user);
+  const token = userInfo?.token || localStorage.getItem('token');
+
   useEffect(() => {
-    fetchPostDetail();
-  }, [postId]);
+    if (isAuthenticated && token) {
+      fetchPostDetail();
+    }
+  }, [postId, isAuthenticated, token]);
 
   const fetchPostDetail = async () => {
+    if (!token) return;
     try {
       const response = await axiosInstance.get(`/posts/${postId}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       setPostDetail(response.data);
@@ -71,11 +79,12 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
   };
 
   const handleDeleteClick = async () => {
-    if (postDetail?.isOwnPost && window.confirm("정말로 게시물을 삭제하시겠습니까?")) {
+    if (!token || !postDetail?.isOwnPost) return;
+    if (window.confirm("정말로 게시물을 삭제하시겠습니까?")) {
       try {
         await axiosInstance.delete(`/posts/${postId}`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+            Authorization: `Bearer ${token}`,
           },
         });
         alert("게시물이 삭제되었습니다.");
@@ -103,7 +112,7 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
       await axiosInstance.put(`/posts/${postId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       setIsEditing(false);
@@ -115,39 +124,27 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
 
   const handleLikeClick = async () => {
     try {
-      const response = await axiosInstance.post(`/posts/${postId}/like`, {}, {
+      await axiosInstance.post(`/posts/${postId}/like`, {}, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
-      setPostDetail(prev => prev ? {
-        ...prev,
-        likesCount: response.data.likeCount,
-        userHasLiked: true,
-      } : null);
+      fetchPostDetail();
     } catch (error) {
       setError("좋아요 처리에 실패했습니다.");
     }
   };
 
   const handleAddComment = async () => {
-    if (!newComment.trim()) {
-      alert("댓글 내용을 입력해주세요.");
-      return;
-    }
-
+    if (!token || !newComment.trim()) return;
     try {
-      const response = await axiosInstance.post(`/posts/${postId}/comments`, { content: newComment }, {
+      await axiosInstance.post(`/posts/${postId}/comments`, { content: newComment }, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
-      setPostDetail(prev => prev ? {
-        ...prev,
-        comments: [...prev.comments, response.data],
-        commentsCount: prev.commentsCount + 1,
-      } : null);
       setNewComment("");
+      fetchPostDetail();
     } catch (error) {
       setError("댓글 작성에 실패했습니다.");
     }
@@ -159,46 +156,34 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
   };
 
   const handleSaveCommentChanges = async () => {
-    if (!editedCommentContent.trim()) {
-      alert("댓글 내용을 입력해주세요.");
-      return;
-    }
-
+    if (!token || !editedCommentContent.trim()) return;
     try {
-      const response = await axiosInstance.put(`/posts/${postId}/comments/${isEditingCommentId}`, 
+      await axiosInstance.put(`/posts/${postId}/comments/${isEditingCommentId}`, 
         { content: editedCommentContent },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
-      setPostDetail(prev => prev ? {
-        ...prev,
-        comments: prev.comments.map(comment => 
-          comment.commentId === isEditingCommentId ? response.data : comment
-        ),
-      } : null);
       setIsEditingCommentId(null);
       setEditedCommentContent("");
+      fetchPostDetail();
     } catch (error) {
       setError("댓글 수정에 실패했습니다.");
     }
   };
 
   const handleDeleteComment = async (commentId: number) => {
+    if (!token) return;
     if (window.confirm("정말로 댓글을 삭제하시겠습니까?")) {
       try {
         await axiosInstance.delete(`/posts/${postId}/comments/${commentId}`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+            Authorization: `Bearer ${token}`,
           },
         });
-        setPostDetail(prev => prev ? {
-          ...prev,
-          comments: prev.comments.filter(comment => comment.commentId !== commentId),
-          commentsCount: prev.commentsCount - 1,
-        } : null);
+        fetchPostDetail();
       } catch (error) {
         setError("댓글 삭제에 실패했습니다.");
       }
@@ -206,27 +191,23 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
   };
 
   const handleLikeComment = async (commentId: number) => {
+    if (!token) return;
     try {
-      const response = await axiosInstance.post(`/posts/${postId}/comments/${commentId}/like`, {}, {
+      await axiosInstance.post(`/posts/${postId}/comments/${commentId}/like`, {}, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
-      setPostDetail(prev => prev ? {
-        ...prev,
-        comments: prev.comments.map(comment => 
-          comment.commentId === commentId ? { ...comment, likeCount: response.data.likeCount } : comment
-        ),
-      } : null);
+      fetchPostDetail();
     } catch (error) {
       setError("댓글 좋아요 처리에 실패했습니다.");
     }
   };
 
+  if (!isAuthenticated || !token) return <div>로그인이 필요합니다.</div>;
   if (error) return <div className="error-message">{error}</div>;
-  if (!postDetail) return <div className="loading-message">로딩 중...</div>;
+  if (!postDetail) return <div className="loading-message">게시물 로딩 중...</div>;
     
-
 
   return (
     <div className="modal">
@@ -268,9 +249,9 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
             <p className="post-date">{new Date(postDetail.createdAt).toLocaleString()}</p>
             <div className="post-actions">
               <span>좋아요 {postDetail.likesCount}개</span>
-              {!postDetail.userHasLiked && (
-                <button onClick={handleLikeClick} className="like-button">좋아요</button>
-              )}
+              <button onClick={handleLikeClick} className="like-button">
+              {postDetail.userHasLiked ? '좋아요 취소' : '좋아요'}
+            </button>
               {postDetail.isOwnPost && (
                 <>
                   <button onClick={handleEditClick} className="edit-button">수정</button>
