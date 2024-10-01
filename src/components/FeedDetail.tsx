@@ -35,9 +35,10 @@ interface PostDetail {
 interface FeedDetailProps {
   postId: number;
   onClose: () => void;
+  onUpdate: () => void;
 }
 
-const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
+const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate  }) => {
   const [postDetail, setPostDetail] = useState<PostDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -51,6 +52,8 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
   const { isAuthenticated, userInfo } = useSelector((state: RootState) => state.user);
   const token = userInfo?.token || localStorage.getItem('token');
 
+  const [isPostModified, setIsPostModified] = useState<boolean>(false);
+
   useEffect(() => {
     if (isAuthenticated && token) {
       fetchPostDetail();
@@ -58,7 +61,7 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
   }, [postId, isAuthenticated, token]);
 
   const fetchPostDetail = async () => {
-    if (!token) return;
+    if (!token) return null;
     try {
       const response = await axiosInstance.get(`/posts/${postId}`, {
         headers: {
@@ -67,8 +70,10 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
       });
       setPostDetail(response.data);
       setContent(response.data.content);
+      return response.data;
     } catch (error) {
       setError("게시물 정보를 불러오는 중 문제가 발생했습니다.");
+      return null;
     }
   };
 
@@ -102,6 +107,7 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
   };
 
   const handleSaveChanges = async () => {
+    if (!token) return;
     try {
       const formData = new FormData();
       formData.append('content', content);
@@ -116,20 +122,25 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
         },
       });
       setIsEditing(false);
+      setIsPostModified(true);
       fetchPostDetail();
+      alert("게시물이 성공적으로 수정되었습니다.");
     } catch (error) {
       setError("게시물 수정에 실패했습니다.");
     }
   };
 
   const handleLikeClick = async () => {
+    if (!token) return;
     try {
       await axiosInstance.post(`/posts/${postId}/like`, {}, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      fetchPostDetail();
+      const updatedPost = await fetchPostDetail();
+      const message = updatedPost.userHasLiked ? "좋아요를 취소했습니다." : "좋아요를 눌렀습니다.";
+      alert(message);
     } catch (error) {
       setError("좋아요 처리에 실패했습니다.");
     }
@@ -145,6 +156,7 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
       });
       setNewComment("");
       fetchPostDetail();
+      alert("댓글이 추가되었습니다.");
     } catch (error) {
       setError("댓글 작성에 실패했습니다.");
     }
@@ -169,6 +181,7 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
       setIsEditingCommentId(null);
       setEditedCommentContent("");
       fetchPostDetail();
+      alert("댓글이 수정되었습니다.");
     } catch (error) {
       setError("댓글 수정에 실패했습니다.");
     }
@@ -203,6 +216,13 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose }) => {
       setError("댓글 좋아요 처리에 실패했습니다.");
     }
   };
+  useEffect(() => {
+    return () => {
+      if (isPostModified) {
+        onUpdate();
+      }
+    };
+  }, [isPostModified, onUpdate]);
 
   if (!isAuthenticated || !token) return <div>로그인이 필요합니다.</div>;
   if (error) return <div className="error-message">{error}</div>;
