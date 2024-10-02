@@ -35,8 +35,8 @@ interface PostDetail {
 interface FeedDetailProps {
   postId: number;
   onClose: () => void;
-  onUpdate: () => void;
-  onDelete: () => void;
+  onUpdate?: () => void;
+  onDelete?: () => void;
 }
 
 const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate, onDelete }) => {
@@ -95,7 +95,10 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate, onDe
           },
         });
         alert("게시물이 삭제되었습니다.");
-        onDelete();  // 삭제 성공 시 호출
+        setIsPostDeleted(true);
+        if (onDelete) {
+          onDelete();
+        }
         onClose();
       } catch (error) {
         setError("게시물 삭제에 실패했습니다.");
@@ -221,11 +224,14 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate, onDe
   };
   useEffect(() => {
     return () => {
-      if (isPostModified || isPostDeleted) {
+      if (isPostModified && onUpdate) {
         onUpdate();
       }
+      if (isPostDeleted && onDelete) {
+        onDelete();
+      }
     };
-  }, [isPostModified,isPostDeleted, onUpdate]);
+  }, [isPostModified, isPostDeleted, onUpdate, onDelete]);
 
   if (!isAuthenticated || !token) return <div>로그인이 필요합니다.</div>;
   if (error) return <div className="error-message">{error}</div>;
@@ -275,7 +281,7 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate, onDe
               <button onClick={handleLikeClick} className="like-button">
               {postDetail.userHasLiked ? '좋아요 취소' : '좋아요'}
             </button>
-              {postDetail.isOwnPost && (
+              {postDetail.isOwnPost && onUpdate && onDelete && (
                 <>
                   <button onClick={handleEditClick} className="edit-button">수정</button>
                   <button onClick={handleDeleteClick} className="delete-button">삭제</button>
