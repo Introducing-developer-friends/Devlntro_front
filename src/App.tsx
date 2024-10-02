@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from './redux/store';
 import { setAuthState, setLoading } from './redux/userSlice';
@@ -15,18 +15,19 @@ import NavBar from "./components/NavBar";
 import CreatePostPage from "./pages/CreatePostPage";
 import "./App.css";
 
-function App() {
+const AppWithRouter = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { isLoading, isAuthenticated } = useSelector((state: RootState) => state.user);
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  // 컴포넌트가 마운트될 때 로컬 스토리지에서 인증 상태를 확인합니다.
   useEffect(() => {
     const checkAuthState = () => {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('userId');
-      
+      const lastPath = localStorage.getItem('lastPath');
+
       if (token && userId) {
-        // 로컬 스토리지에 토큰과 userId가 있는 경우 인증 상태를 업데이트
         dispatch(setAuthState({
           isAuthenticated: true,
           userInfo: {
@@ -34,40 +35,58 @@ function App() {
             token
           }
         }));
+
+        // 인증된 상태에서 로그인 페이지나 루트 경로에 있다면 마지막 경로로 이동
+        if (location.pathname === '/' || location.pathname === '/login') {
+          navigate(lastPath || '/feed', { replace: true });
+        }
       } else {
-        // 인증 정보가 없는 경우 인증 상태를 비활성화
         dispatch(setAuthState({ isAuthenticated: false, userInfo: null }));
+        // 인증되지 않은 상태에서 보호된 경로에 있다면 로그인 페이지로 이동
+        if (location.pathname !== '/login' && location.pathname !== '/signup') {
+          navigate('/login', { replace: true });
+        }
       }
-      // 로딩 상태를 false로 설정
       dispatch(setLoading(false));
     };
 
-    // 로딩 상태를 true로 설정하고 인증 상태를 확인
     dispatch(setLoading(true));
     checkAuthState();
-  }, [dispatch]);
+  }, [dispatch, navigate]);
 
-  // 로딩 중일 때 로딩 메시지를 표시
+  // 현재 경로 저장 (로그인, 회원가입 페이지 제외)
+  useEffect(() => {
+    if (location.pathname !== '/login' && location.pathname !== '/signup') {
+      localStorage.setItem('lastPath', location.pathname);
+    }
+  }, [location.pathname]);
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
   return (
+    <div className="App">
+      <Routes>
+        <Route path="/" element={isAuthenticated ? <Navigate to={localStorage.getItem('lastPath') || "/feed"} replace /> : <Navigate to="/login" replace />} />
+        <Route path="/login" element={isAuthenticated ? <Navigate to={localStorage.getItem('lastPath') || "/feed"} replace /> : <LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/feed" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
+        <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
+        <Route path="/friends-feed/:userId" element={<ProtectedRoute><FriendsFeedPage /></ProtectedRoute>} />
+        <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
+        <Route path="/create-post" element={<ProtectedRoute><CreatePostPage /></ProtectedRoute>} />
+      </Routes>
+      <NavBar />
+    </div>
+  );
+};
+
+function App() {
+  return (
     <AuthProvider>
       <Router>
-        <div className="App">
-          <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/login" element={isAuthenticated ? <Navigate to="/feed" replace /> : <LoginPage />} />
-            <Route path="/signup" element={<SignUpPage />} />
-            <Route path="/feed" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
-            <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
-            <Route path="/friends-feed/:userId" element={<ProtectedRoute><FriendsFeedPage /></ProtectedRoute>} />
-            <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
-            <Route path="/create-post" element={<ProtectedRoute><CreatePostPage /></ProtectedRoute>} />
-          </Routes>
-          <NavBar />
-        </div>
+        <AppWithRouter />
       </Router>
     </AuthProvider>
   );

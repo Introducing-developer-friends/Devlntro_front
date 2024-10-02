@@ -71,7 +71,35 @@ const FeedPage: React.FC = () => {
     navigate("/create-post");
   };
 
+  const fetchPosts = async () => {
+    try {
+      const response = await axiosInstance.get(
+        `/posts?filter=all&sort=${sortOption}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+          },
+        }
+      );
+      console.log("Fetched posts:", response.data.posts);
+      setPosts(response.data.posts);
+    } catch (error) {
+      setError("게시물을 불러오는 중 문제가 발생했습니다.");
+      console.error("Error fetching posts:", error);
+    }
+  };
 
+  useEffect(() => {
+    fetchPosts();
+  }, [sortOption]);
+
+  const handlePostUpdate = () => {
+    fetchPosts(); // 게시물이 수정되었을 때만 호출됨
+  };
+
+  const handlePostDelete = () => {
+    fetchPosts();
+  };
   
   const processImageUrl = (imageUrl: string) => {
     if (!imageUrl) return '';
@@ -136,7 +164,7 @@ const FeedPage: React.FC = () => {
       </div>
 
       {isModalOpen && selectedPostId && (
-        <FeedDetail postId={selectedPostId} onClose={handleCloseModal} />
+        <FeedDetail postId={selectedPostId} onClose={handleCloseModal} onUpdate={handlePostUpdate} onDelete={handlePostDelete} />
       )}
     </div>
   );

@@ -52,6 +52,23 @@ const MyPage: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  const fetchPosts = async () => {
+    try {
+      const response = await axiosInstance.get(
+        `/posts?filter=own&sort=${sortOption}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("JWT_TOKEN")}`,
+          },
+        }
+      );
+      setPosts(response.data.posts);
+    } catch (error) {
+      setError("게시물을 불러오는 중 문제가 발생했습니다.");
+      console.error("Error fetching posts:", error);
+    }
+  };
+
   useEffect(() => {
     if (userId) {
       // axios를 사용해 백엔드로 GET 요청 전송
@@ -103,7 +120,14 @@ const MyPage: React.FC = () => {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedPostId(null); // 모달을 닫을 때 데이터 초기화
+    setSelectedPostId(null);
+  };
+  const handlePostUpdate = () => {
+    fetchPosts(); // 게시물이 수정되었을 때만 호출됨
+  };
+
+  const handlePostDelete = () => {
+    fetchPosts();
   };
 
   const handleAccountDeletion = (password: string | null) => {
@@ -308,7 +332,7 @@ const MyPage: React.FC = () => {
       )}
 
       {isModalOpen && selectedPostId && (
-        <FeedDetail postId={selectedPostId} onClose={handleCloseModal} />
+        <FeedDetail postId={selectedPostId} onClose={handleCloseModal} onUpdate={handlePostUpdate} onDelete={handlePostDelete} />
       )}
     </div>
   );
