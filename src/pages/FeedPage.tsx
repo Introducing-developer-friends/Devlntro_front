@@ -96,6 +96,10 @@ const FeedPage: React.FC = () => {
   const handlePostUpdate = () => {
     fetchPosts(); // 게시물이 수정되었을 때만 호출됨
   };
+
+  const handlePostDelete = () => {
+    fetchPosts();
+  };
   
   const processImageUrl = (imageUrl: string) => {
     if (!imageUrl) return '';
@@ -160,7 +164,7 @@ const FeedPage: React.FC = () => {
       </div>
 
       {isModalOpen && selectedPostId && (
-        <FeedDetail postId={selectedPostId} onClose={handleCloseModal} onUpdate={handlePostUpdate} />
+        <FeedDetail postId={selectedPostId} onClose={handleCloseModal} onUpdate={handlePostUpdate} onDelete={handlePostDelete} />
       )}
     </div>
   );

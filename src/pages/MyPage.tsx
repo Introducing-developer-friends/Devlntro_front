@@ -126,6 +126,10 @@ const MyPage: React.FC = () => {
     fetchPosts(); // 게시물이 수정되었을 때만 호출됨
   };
 
+  const handlePostDelete = () => {
+    fetchPosts();
+  };
+
   const handleAccountDeletion = (password: string | null) => {
     if (window.confirm("정말로 탈퇴하시겠습니까?")) {
       axiosInstance
@@ -328,7 +332,7 @@ const MyPage: React.FC = () => {
       )}
 
       {isModalOpen && selectedPostId && (
-        <FeedDetail postId={selectedPostId} onClose={handleCloseModal} onUpdate={handlePostUpdate} />
+        <FeedDetail postId={selectedPostId} onClose={handleCloseModal} onUpdate={handlePostUpdate} onDelete={handlePostDelete} />
       )}
     </div>
   );

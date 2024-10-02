@@ -36,9 +36,10 @@ interface FeedDetailProps {
   postId: number;
   onClose: () => void;
   onUpdate: () => void;
+  onDelete: () => void;
 }
 
-const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate  }) => {
+const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate, onDelete }) => {
   const [postDetail, setPostDetail] = useState<PostDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -53,6 +54,7 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate  }) =
   const token = userInfo?.token || localStorage.getItem('token');
 
   const [isPostModified, setIsPostModified] = useState<boolean>(false);
+  const [isPostDeleted, setIsPostDeleted] = useState<boolean>(false);
 
   useEffect(() => {
     if (isAuthenticated && token) {
@@ -93,6 +95,7 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate  }) =
           },
         });
         alert("게시물이 삭제되었습니다.");
+        onDelete();  // 삭제 성공 시 호출
         onClose();
       } catch (error) {
         setError("게시물 삭제에 실패했습니다.");
@@ -218,11 +221,11 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate  }) =
   };
   useEffect(() => {
     return () => {
-      if (isPostModified) {
+      if (isPostModified || isPostDeleted) {
         onUpdate();
       }
     };
-  }, [isPostModified, onUpdate]);
+  }, [isPostModified,isPostDeleted, onUpdate]);
 
   if (!isAuthenticated || !token) return <div>로그인이 필요합니다.</div>;
   if (error) return <div className="error-message">{error}</div>;
