@@ -65,11 +65,18 @@ const AppWithRouter = () => {
     return <div>Loading...</div>;
   }
 
+  const showNavBar = isAuthenticated && location.pathname !== '/login' && location.pathname !== '/signup';
+
   return (
     <div className="App">
+      {showNavBar && <NavBar />}
       <Routes>
-        <Route path="/" element={isAuthenticated ? <Navigate to={localStorage.getItem('lastPath') || "/feed"} replace /> : <Navigate to="/login" replace />} />
-        <Route path="/login" element={isAuthenticated ? <Navigate to={localStorage.getItem('lastPath') || "/feed"} replace /> : <LoginPage />} />
+        <Route path="/" element={
+          isAuthenticated ? <Navigate to={localStorage.getItem('lastPath') || "/feed"} replace /> : <Navigate to="/login" replace />
+        } />
+        <Route path="/login" element={
+          isAuthenticated ? <Navigate to={localStorage.getItem('lastPath') || "/feed"} replace /> : <LoginPage />
+        } />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/feed" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
         <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
@@ -77,7 +84,6 @@ const AppWithRouter = () => {
         <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
         <Route path="/create-post" element={<ProtectedRoute><CreatePostPage /></ProtectedRoute>} />
       </Routes>
-      <NavBar />
     </div>
   );
 };
