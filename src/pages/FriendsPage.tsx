@@ -136,17 +136,14 @@ const FriendsPage: React.FC = () => {
       // 친구 요청이 성공하면 알림 생성
       if (response.data && response.data.statusCode === 201) {
         try {
-          const token = userInfo.token;
+          
   
           // 친구 요청 알림을 생성
           const notificationResponse = await axiosInstance.post('/notifications/friend-request', {
-            senderId: userInfo.userId,  // Redux에서 가져온 userId 사용
             receiverId: receiverUserId,  // 친구 요청을 받은 사용자의 userId
             message: `${userInfo.name || '알 수 없는 사용자'}님이 친구 요청을 보냈습니다.`
           }, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
+            
           });
           
           console.log("알림 생성 응답:", notificationResponse.data);

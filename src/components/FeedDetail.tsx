@@ -166,7 +166,6 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate, onDe
       try {
         await axiosInstance.post('/notifications/like-post', {
           postId: postId,
-          senderId: userInfo.userId,
           receiverId: postDetail.createrId,
           message: `${userInfo.name || '알 수 없는 사용자'}님이 당신의 게시물에 좋아요를 눌렀습니다.`
         });
@@ -202,14 +201,10 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate, onDe
       try {
         await axiosInstance.post('/notifications/comment', {
           postId: postId,
-          senderId: userInfo.userId,
           receiverId: postDetail?.createrId,
           message: `${userInfo?.name || '누군가'}님이 당신의 게시물에 댓글을 남겼습니다.`
-        }, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        }, 
+        );
         
       } catch (error) {
         console.error("댓글 알림 생성 실패:", error);
@@ -295,14 +290,9 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate, onDe
           try {
             await axiosInstance.post('/notifications/like-comment', {
               commentId: commentId,
-              senderId: userInfo.userId,
               receiverId: comment.authorId,
               message: `${userInfo.name || '알 수 없는 사용자'}님이 당신의 댓글에 좋아요를 눌렀습니다.`
-            }, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            });
+            }, );
             
           } catch (error: any) {
             console.error("댓글 좋아요 알림 생성 실패:", error);
