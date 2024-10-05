@@ -2,7 +2,7 @@ import React, { useEffect, useState,  useCallback  } from "react";
 import axiosInstance from "../api/axiosInstance";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux"; // Redux에서 상태를 불러오기 위해 추가
-import { RootState } from "../store"; // RootState 타입 추가 (Redux 상태)
+import { RootState } from "../redux/store"; // RootState 타입 추가 (Redux 상태)
 import "./FriendsPage.css";
 
 interface Contact {
