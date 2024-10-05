@@ -224,7 +224,7 @@ const MyPage: React.FC = () => {
   return (
     <div className="my-page">
       <div className="settings">
-        <button onClick={() => setDropdownOpen(!dropdownOpen)}>설정</button>
+        <button onClick={() => setDropdownOpen(!dropdownOpen)}>Settings</button>
         {dropdownOpen && (
           <ul className="dropdown-menu">
             <li onClick={() => setIsPasswordModalOpen(true)}>비밀번호 변경</li>

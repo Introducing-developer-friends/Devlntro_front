@@ -1,6 +1,8 @@
 import React, { useEffect, useState,  useCallback  } from "react";
 import axiosInstance from "../api/axiosInstance";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux"; // Redux에서 상태를 불러오기 위해 추가
+import { RootState } from "../redux/store"; // RootState 타입 추가 (Redux 상태)
 import "./FriendsPage.css";
 
 interface Contact {
@@ -38,6 +40,8 @@ const FriendsPage: React.FC = () => {
 
   const isAuthenticated = !!localStorage.getItem('token');
 
+  // Redux에서 사용자 정보를 가져옴
+  const userInfo = useSelector((state: RootState) => state.user.userInfo);
 
   const handleGoToFeed = () => {
     if (selectedContact) {
@@ -112,16 +116,60 @@ const FriendsPage: React.FC = () => {
   };
 
   const handleAddContactRequest = async () => {
+    if (!userInfo) {
+      setError("사용자 정보가 없습니다. 로그인 후 다시 시도해주세요.");
+      return;
+    }
+
     try {
-      await axiosInstance.post("/contacts", { login_id: newContactId });
+      // 먼저 login_id로 user_id를 서버에서 가져옴
+      const userIdResponse = await axiosInstance.post("/notifications/find-user-id", { login_id: newContactId });
+      const receiverUserId = userIdResponse.data.userId;
+  
+      console.log("Receiver User ID:", receiverUserId);
+  
+      // 친구 요청을 보냄
+      const response = await axiosInstance.post("/contacts", { login_id: newContactId });
+      
+      console.log("친구 요청 응답:", response.data);
+  
+      // 친구 요청이 성공하면 알림 생성
+      if (response.data && response.data.statusCode === 201) {
+        try {
+          
+  
+          // 친구 요청 알림을 생성
+          const notificationResponse = await axiosInstance.post('/notifications/friend-request', {
+            receiverId: receiverUserId,  // 친구 요청을 받은 사용자의 userId
+            message: `${userInfo.name || '알 수 없는 사용자'}님이 친구 요청을 보냈습니다.`
+          }, {
+            
+          });
+          
+          console.log("알림 생성 응답:", notificationResponse.data);
+        } catch (error: any) {
+          console.error("친구 요청 알림 생성 실패:", error);
+          if (error.response) {
+            console.error("에러 응답:", error.response.data);
+          }
+        }
+      } else {
+        console.error("친구 요청 응답이 예상과 다릅니다:", response.data);
+      }
+      
       setNewContactId("");
       fetchSentRequests();
       setNotification("요청을 보냈습니다.");
       setTimeout(() => setNotification(null), 3000);
     } catch (error: any) {
+      console.error("친구 요청 실패:", error);
+      if (error.response) {
+        console.error("에러 응답:", error.response.data);
+      }
       setError(error.response?.data?.message || "Failed to send contact request.");
     }
   };
+  
 
   const handleDeleteContact = async (contactId: string) => {
     try {

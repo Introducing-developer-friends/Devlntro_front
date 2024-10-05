@@ -25,14 +25,16 @@ const AppWithRouter = () => {
     const checkAuthState = () => {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('userId');
+      const userName = localStorage.getItem('userName');
       const lastPath = localStorage.getItem('lastPath');
 
-      if (token && userId) {
+      if (token && userId && userName) {
         dispatch(setAuthState({
           isAuthenticated: true,
           userInfo: {
             userId: parseInt(userId),
-            token
+            token,
+            name: userName
           }
         }));
 
@@ -52,7 +54,7 @@ const AppWithRouter = () => {
 
     dispatch(setLoading(true));
     checkAuthState();
-  }, [dispatch, navigate]);
+  }, [dispatch, navigate, location.pathname]);
 
   // 현재 경로 저장 (로그인, 회원가입 페이지 제외)
   useEffect(() => {
@@ -65,11 +67,18 @@ const AppWithRouter = () => {
     return <div>Loading...</div>;
   }
 
+  const showNavBar = isAuthenticated && location.pathname !== '/login' && location.pathname !== '/signup';
+
   return (
     <div className="App">
+      {showNavBar && <NavBar />}
       <Routes>
-        <Route path="/" element={isAuthenticated ? <Navigate to={localStorage.getItem('lastPath') || "/feed"} replace /> : <Navigate to="/login" replace />} />
-        <Route path="/login" element={isAuthenticated ? <Navigate to={localStorage.getItem('lastPath') || "/feed"} replace /> : <LoginPage />} />
+        <Route path="/" element={
+          isAuthenticated ? <Navigate to={localStorage.getItem('lastPath') || "/feed"} replace /> : <Navigate to="/login" replace />
+        } />
+        <Route path="/login" element={
+          isAuthenticated ? <Navigate to={localStorage.getItem('lastPath') || "/feed"} replace /> : <LoginPage />
+        } />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/feed" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
         <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
@@ -77,7 +86,6 @@ const AppWithRouter = () => {
         <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
         <Route path="/create-post" element={<ProtectedRoute><CreatePostPage /></ProtectedRoute>} />
       </Routes>
-      <NavBar />
     </div>
   );
 };
