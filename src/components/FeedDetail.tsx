@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import axiosInstance from "../api/axiosInstance";
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import "./FeedDetail.css";
 import { RootState } from '../redux/store';
-import { addNotification } from '../redux/notificationSlice';
 
 interface Comment {
   commentId: number;
@@ -51,8 +50,6 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate, onDe
   const [isEditingCommentId, setIsEditingCommentId] = useState<number | null>(null);
   const [editedCommentContent, setEditedCommentContent] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const dispatch = useDispatch();
   const { userInfo } = useSelector((state: RootState) => state.user);
   const { isAuthenticated } = useSelector((state: RootState) => state.user);
   const token = userInfo?.token || localStorage.getItem('token');
