@@ -25,14 +25,16 @@ const AppWithRouter = () => {
     const checkAuthState = () => {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('userId');
+      const userName = localStorage.getItem('userName');
       const lastPath = localStorage.getItem('lastPath');
 
-      if (token && userId) {
+      if (token && userId && userName) {
         dispatch(setAuthState({
           isAuthenticated: true,
           userInfo: {
             userId: parseInt(userId),
-            token
+            token,
+            name: userName
           }
         }));
 
@@ -52,7 +54,7 @@ const AppWithRouter = () => {
 
     dispatch(setLoading(true));
     checkAuthState();
-  }, [dispatch, navigate]);
+  }, [dispatch, navigate, location.pathname]);
 
   // 현재 경로 저장 (로그인, 회원가입 페이지 제외)
   useEffect(() => {
