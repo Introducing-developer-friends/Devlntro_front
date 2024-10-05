@@ -1,11 +1,13 @@
-import React, { useEffect, useState, useRef  } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axiosInstance from "../api/axiosInstance";
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import "./FeedDetail.css";
-import { RootState } from '../redux/store'; // 리덕스 스토어 타입 import
+import { RootState } from '../redux/store';
+import { addNotification } from '../redux/notificationSlice';
 
 interface Comment {
   commentId: number;
+  authorId: number;
   authorName: string;
   content: string;
   createdAt: string;
@@ -50,7 +52,9 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate, onDe
   const [editedCommentContent, setEditedCommentContent] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { isAuthenticated, userInfo } = useSelector((state: RootState) => state.user);
+  const dispatch = useDispatch();
+  const { userInfo } = useSelector((state: RootState) => state.user);
+  const { isAuthenticated } = useSelector((state: RootState) => state.user);
   const token = userInfo?.token || localStorage.getItem('token');
 
   const [isPostModified, setIsPostModified] = useState<boolean>(false);
@@ -137,25 +141,60 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate, onDe
   };
 
   const handleLikeClick = async () => {
-    if (!token) return;
-    try {
-      await axiosInstance.post(`/posts/${postId}/like`, {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const updatedPost = await fetchPostDetail();
-      const message = updatedPost.userHasLiked ? "좋아요를 취소했습니다." : "좋아요를 눌렀습니다.";
-      alert(message);
-    } catch (error) {
-      setError("좋아요 처리에 실패했습니다.");
+  if (!token || !userInfo || !postDetail) return;
+  try {
+    const response = await axiosInstance.post(`/posts/${postId}/like`, {}, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const { message, likeCount } = response.data;
+    const isLiked = message.includes('눌렀습니다');
+
+    // 포스트 상세 정보 업데이트
+    setPostDetail(prevPostDetail => {
+      if (prevPostDetail === null) return null;
+      return {
+        ...prevPostDetail,
+        userHasLiked: isLiked,
+        likesCount: likeCount
+      };
+    });
+
+    alert(message);
+
+    // 좋아요를 눌렀을 때만 알림 생성
+    if (isLiked) {
+      try {
+        const notificationResponse = await axiosInstance.post('/notifications/like-post', {
+          postId: postId,
+          senderId: userInfo.userId,
+          receiverId: postDetail.createrId,
+          message: `${userInfo.name || '알 수 없는 사용자'}님이 당신의 게시물에 좋아요를 눌렀습니다.`
+        });
+        
+        if (notificationResponse.data) {
+          dispatch(addNotification(notificationResponse.data));
+        }
+      } catch (error: any) {
+        console.error("좋아요 알림 생성 실패:", error);
+        if (error.response) {
+          console.error("에러 응답:", error.response.data);
+        }
+      }
     }
-  };
+  } catch (error) {
+    console.error("좋아요 처리 실패:", error);
+    setError("좋아요 처리에 실패했습니다.");
+  }
+};
+  
 
   const handleAddComment = async () => {
-    if (!token || !newComment.trim()) return;
+    if (!token || !newComment.trim() || !userInfo) return;
     try {
-      await axiosInstance.post(`/posts/${postId}/comments`, { content: newComment }, {
+      const response = await axiosInstance.post(`/posts/${postId}/comments`, { content: newComment }, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -163,6 +202,26 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate, onDe
       setNewComment("");
       fetchPostDetail();
       alert("댓글이 추가되었습니다.");
+
+      // 댓글 알림 생성
+      try {
+        const notificationResponse = await axiosInstance.post('/notifications/comment', {
+          postId: postId,
+          senderId: userInfo.userId,
+          receiverId: postDetail?.createrId,
+          message: `${userInfo?.name || '누군가'}님이 당신의 게시물에 댓글을 남겼습니다.`
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        
+        if (notificationResponse.data) {
+          dispatch(addNotification(notificationResponse.data));
+        }
+      } catch (error) {
+        console.error("댓글 알림 생성 실패:", error);
+      }
     } catch (error) {
       setError("댓글 작성에 실패했습니다.");
     }
@@ -210,18 +269,67 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate, onDe
   };
 
   const handleLikeComment = async (commentId: number) => {
-    if (!token) return;
+    if (!token || !userInfo || !postDetail) return;
     try {
-      await axiosInstance.post(`/posts/${postId}/comments/${commentId}/like`, {}, {
+      const response = await axiosInstance.post(`/posts/${postId}/comments/${commentId}/like`, {}, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      fetchPostDetail();
+  
+      const { message, likeCount } = response.data;
+      const isLiked = message.includes('눌렀습니다');
+  
+      // 댓글 좋아요 상태 업데이트
+      setPostDetail(prevPostDetail => {
+        if (!prevPostDetail) return null;
+        return {
+          ...prevPostDetail,
+          comments: prevPostDetail.comments.map(comment => 
+            comment.commentId === commentId 
+              ? { ...comment, likeCount: likeCount }
+              : comment
+          )
+        };
+      });
+  
+      alert(message);
+  
+      // 좋아요를 눌렀을 때만 알림 생성
+      if (isLiked) {
+        const comment = postDetail.comments.find(c => c.commentId === commentId);
+        if (comment && comment.authorId !== userInfo.userId) {
+          try {
+            const notificationResponse = await axiosInstance.post('/notifications/like-comment', {
+              commentId: commentId,
+              senderId: userInfo.userId,
+              receiverId: comment.authorId,
+              message: `${userInfo.name || '알 수 없는 사용자'}님이 당신의 댓글에 좋아요를 눌렀습니다.`
+            }, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            
+            if (notificationResponse.data) {
+              dispatch(addNotification(notificationResponse.data));
+            }
+          } catch (error: any) {
+            console.error("댓글 좋아요 알림 생성 실패:", error);
+            if (error.response) {
+              console.error("에러 응답:", error.response.data);
+            }
+          }
+        }
+      }
     } catch (error) {
+      console.error("댓글 좋아요 처리 실패:", error);
       setError("댓글 좋아요 처리에 실패했습니다.");
     }
   };
+  
+  
+  
   useEffect(() => {
     return () => {
       if (isPostModified && onUpdate) {
