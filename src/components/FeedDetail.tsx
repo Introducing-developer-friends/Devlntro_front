@@ -164,19 +164,16 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate, onDe
 
     alert(message);
 
-    // 좋아요를 눌렀을 때만 알림 생성
-    if (isLiked) {
+    // 본인 게시물이 아니고, 좋아요를 눌렀을 때만 알림 생성
+    if (isLiked && postDetail.createrId !== userInfo.userId) {
       try {
-        const notificationResponse = await axiosInstance.post('/notifications/like-post', {
+        await axiosInstance.post('/notifications/like-post', {
           postId: postId,
           senderId: userInfo.userId,
           receiverId: postDetail.createrId,
           message: `${userInfo.name || '알 수 없는 사용자'}님이 당신의 게시물에 좋아요를 눌렀습니다.`
         });
         
-        if (notificationResponse.data) {
-          dispatch(addNotification(notificationResponse.data));
-        }
       } catch (error: any) {
         console.error("좋아요 알림 생성 실패:", error);
         if (error.response) {
@@ -192,9 +189,9 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate, onDe
   
 
   const handleAddComment = async () => {
-    if (!token || !newComment.trim() || !userInfo) return;
+    if (!token || !newComment.trim() || !userInfo || !postDetail) return;
     try {
-      const response = await axiosInstance.post(`/posts/${postId}/comments`, { content: newComment }, {
+      await axiosInstance.post(`/posts/${postId}/comments`, { content: newComment }, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -204,8 +201,9 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate, onDe
       alert("댓글이 추가되었습니다.");
 
       // 댓글 알림 생성
+      if (postDetail.createrId !== userInfo.userId) {
       try {
-        const notificationResponse = await axiosInstance.post('/notifications/comment', {
+        await axiosInstance.post('/notifications/comment', {
           postId: postId,
           senderId: userInfo.userId,
           receiverId: postDetail?.createrId,
@@ -216,12 +214,10 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate, onDe
           },
         });
         
-        if (notificationResponse.data) {
-          dispatch(addNotification(notificationResponse.data));
-        }
       } catch (error) {
         console.error("댓글 알림 생성 실패:", error);
       }
+    }
     } catch (error) {
       setError("댓글 작성에 실패했습니다.");
     }
@@ -300,7 +296,7 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate, onDe
         const comment = postDetail.comments.find(c => c.commentId === commentId);
         if (comment && comment.authorId !== userInfo.userId) {
           try {
-            const notificationResponse = await axiosInstance.post('/notifications/like-comment', {
+            await axiosInstance.post('/notifications/like-comment', {
               commentId: commentId,
               senderId: userInfo.userId,
               receiverId: comment.authorId,
@@ -311,9 +307,6 @@ const FeedDetail: React.FC<FeedDetailProps> = ({ postId, onClose, onUpdate, onDe
               },
             });
             
-            if (notificationResponse.data) {
-              dispatch(addNotification(notificationResponse.data));
-            }
           } catch (error: any) {
             console.error("댓글 좋아요 알림 생성 실패:", error);
             if (error.response) {
