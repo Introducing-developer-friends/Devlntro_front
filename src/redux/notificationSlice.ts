@@ -2,12 +2,13 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface Notification {
   notificationId: number;
-  type: string;
+  type: 'comment' | 'post_like' | 'comment_like';
   message: string;
   isRead: boolean;
   createdAt: string;
   postId?: number;
   commentId?: number;
+  senderId: number;
 }
 
 interface NotificationState {
@@ -28,9 +29,15 @@ const notificationSlice = createSlice({
       state.notifications = action.payload;
       state.unreadCount = action.payload.filter(n => !n.isRead).length;
     },
+    addNotification: (state, action: PayloadAction<Notification>) => {
+      state.notifications.unshift(action.payload);
+      if (!action.payload.isRead) {
+        state.unreadCount += 1;
+      }
+    },
     markAsRead: (state, action: PayloadAction<number>) => {
       const notification = state.notifications.find(n => n.notificationId === action.payload);
-      if (notification) {
+      if (notification && !notification.isRead) {
         notification.isRead = true;
         state.unreadCount = Math.max(0, state.unreadCount - 1);
       }
@@ -46,5 +53,12 @@ const notificationSlice = createSlice({
   },
 });
 
-export const { setNotifications, markAsRead, deleteNotification, deleteMultipleNotifications } = notificationSlice.actions;
+export const { 
+  setNotifications, 
+  addNotification, 
+  markAsRead, 
+  deleteNotification, 
+  deleteMultipleNotifications 
+} = notificationSlice.actions;
+
 export default notificationSlice.reducer;
