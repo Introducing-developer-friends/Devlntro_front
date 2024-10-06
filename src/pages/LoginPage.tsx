@@ -41,11 +41,12 @@ const LoginPage: React.FC = () => {
         password: password,
       });
 
-      const { userId, token } = response.data;
+      const { userId, token, name } = response.data;
 
       if (userId && token) {
+        const userName = name || loginId;
         // 로그인 성공 시 리덕스 상태와 axios 기본 헤더를 업데이트하고 피드 페이지로 이동합니다.
-        dispatch(login({ userId: Number(userId), token }));
+        dispatch(login({ userId: Number(userId), token, name: userName }));
         axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         navigate("/feed");
       } else {
