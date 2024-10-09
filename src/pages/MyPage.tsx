@@ -133,7 +133,7 @@ const MyPage: React.FC = () => {
   const handleAccountDeletion = (password: string | null) => {
     if (window.confirm("정말로 탈퇴하시겠습니까?")) {
       axiosInstance
-        .delete("/users/password", {
+        .delete("/users", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`, // JWT 토큰 헤더 추가
           },
