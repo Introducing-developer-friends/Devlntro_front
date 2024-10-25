@@ -83,7 +83,7 @@ const LoginPage: React.FC = () => {
       <div className="welcome-message">
         <h2>안녕하세요!!</h2>
         <p>개친소에서 명함을 교환한 사람들의 근황을 확인하고,</p>
-        <p>새로운 비즈니스 기회를 포착하세요!</p>
+        <p>새로운 비즈니스 기회를 포착하세요!!</p>
       </div>
       <div className="login-box">
         <h2>Login</h2>
