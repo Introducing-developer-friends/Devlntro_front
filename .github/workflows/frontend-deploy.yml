@@ -2,9 +2,9 @@ name: Frontend Deploy to S3
 
 on:
   push:
-    branches: [ develop, master ]
+    branches: [develop, master]
     paths:
-      - '**'  # 루트 디렉토리에서의 파일 변경 감지
+      - "**" # 루트 디렉토리에서의 파일 변경 감지
 
 jobs:
   deploy:
@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '20.15.0'
+          node-version: "20.15.0"
 
       # 의존성 설치
       - name: Install dependencies
@@ -43,4 +43,4 @@ jobs:
       # CloudFront 캐시 무효화
       - name: Invalidate CloudFront Cache
         run: |
-          aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFRONT_ID }} --paths "/*"
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFRONT_ID }} --paths "/*" "/images/*"
