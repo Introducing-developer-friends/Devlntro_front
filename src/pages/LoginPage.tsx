@@ -35,26 +35,33 @@ const LoginPage: React.FC = () => {
     setErrorMessage("");
     setIsLoading(true);
     try {
-      // 서버에 로그인 요청을 보냅니다.
       const response = await axiosInstance.post("/auth/login", {
         login_id: loginId,
         password: password,
       });
 
-      const { userId, token, name } = response.data;
-
-      if (userId && token) {
+      console.log('Login response data:', response.data);  // 응답 데이터 확인
+      
+      const { userId, accessToken, refreshToken, name } = response.data;
+      
+      console.log('Extracted data:', { userId, accessToken, refreshToken, name });
+      if (userId && accessToken  && refreshToken) {
         const userName = name || loginId;
-        // 로그인 성공 시 리덕스 상태와 axios 기본 헤더를 업데이트하고 피드 페이지로 이동합니다.
-        dispatch(login({ userId: Number(userId), token, name: userName }));
-        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        // 로그인 성공 시 리덕스 상태 업데이트
+        dispatch(login({ 
+          userId: Number(userId), 
+          token: accessToken,
+          refreshToken,
+          name: userName 
+        }));
+        
         navigate("/feed");
       } else {
         setErrorMessage("Invalid response from server. Please try again.");
       }
     } catch (error) {
       if (error instanceof AxiosError) {
-        // 에러 발생 시 적절한 에러 메시지를 설정
         setErrorMessage(error.response?.data?.message || "Login failed. Please check your credentials.");
       } else {
         setErrorMessage("An unknown error occurred. Please try again.");

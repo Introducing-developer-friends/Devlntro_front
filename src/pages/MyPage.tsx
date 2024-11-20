@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import axiosInstance from "../api/axiosInstance";
 import { RootState } from "../redux/store";
 import "./MyPage.css";
 import FeedDetail from "../components/FeedDetail"; // 모달 컴포넌트
 import PasswordChange from "../components/PasswordChange"; // 비밀번호 변경 모달 컴포넌트
-
+import { logout } from "../redux/userSlice";
 // 명함 정보 인터페이스 정의
 interface ContactInfo {
   userId: number;
@@ -29,6 +29,7 @@ interface Post {
 }
 
 const MyPage: React.FC = () => {
+  const dispatch = useDispatch();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
@@ -155,10 +156,26 @@ const MyPage: React.FC = () => {
   
   
 
-  const handleLogout = () => {
-    console.log("잘 작동!!!");
-    localStorage.removeItem("token");
-    window.location.reload();
+  const handleLogout = async () => {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      
+      if (refreshToken) {
+        // 백엔드에 로그아웃 요청 보내기
+        await axiosInstance.post('/auth/logout', {
+          refreshToken
+        });
+      }
+      
+      // 로그아웃 성공 시 프론트엔드 상태 정리
+      dispatch(logout());
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // 에러가 발생하더라도 프론트엔드에서는 로그아웃 처리
+      dispatch(logout());
+      navigate('/login');
+    }
   };
 
   const handleProfileUpdate = (updatedInfo: Partial<ContactInfo>) => {
