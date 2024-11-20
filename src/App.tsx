@@ -14,7 +14,7 @@ import MyPage from "./pages/MyPage";
 import NavBar from "./components/NavBar";
 import CreatePostPage from "./pages/CreatePostPage";
 import "./App.css";
-import axiosInstance, { setAuthToken } from "./api/axiosInstance";
+import { setAuthToken } from "./api/axiosInstance";
 
 const AppWithRouter = () => {
   const dispatch = useDispatch<AppDispatch>();
