@@ -14,6 +14,7 @@ import MyPage from "./pages/MyPage";
 import NavBar from "./components/NavBar";
 import CreatePostPage from "./pages/CreatePostPage";
 import "./App.css";
+import { setAuthToken } from "./api/axiosInstance";
 
 const AppWithRouter = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -24,16 +25,22 @@ const AppWithRouter = () => {
   useEffect(() => {
     const checkAuthState = () => {
       const token = localStorage.getItem('token');
+      const refreshToken = localStorage.getItem('refreshToken');
       const userId = localStorage.getItem('userId');
       const userName = localStorage.getItem('userName');
       const lastPath = localStorage.getItem('lastPath');
 
-      if (token && userId && userName) {
+      if (token && refreshToken && userId && userName) {
+        // axios 인스턴스에 토큰 설정
+        setAuthToken(token);
+        
+        // Redux 상태 업데이트
         dispatch(setAuthState({
           isAuthenticated: true,
           userInfo: {
             userId: parseInt(userId),
             token,
+            refreshToken,
             name: userName
           }
         }));
@@ -43,7 +50,14 @@ const AppWithRouter = () => {
           navigate(lastPath || '/feed', { replace: true });
         }
       } else {
+        // 필요한 인증 정보가 하나라도 없으면 전체 초기화
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userName');
+        
         dispatch(setAuthState({ isAuthenticated: false, userInfo: null }));
+        
         // 인증되지 않은 상태에서 보호된 경로에 있다면 로그인 페이지로 이동
         if (location.pathname !== '/login' && location.pathname !== '/signup') {
           navigate('/login', { replace: true });
