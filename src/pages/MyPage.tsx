@@ -71,22 +71,17 @@ const MyPage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (userId) {
-      // axios를 사용해 백엔드로 GET 요청 전송
+    if (userId && isAuthenticated) {
       axiosInstance
         .get(`/contacts/${userId}`)
         .then((response) => {
-          console.log("Contact info response:", response.data);
           setContactInfo(response.data.contact);
         })
-        .catch((error) => {
-          console.error("Full error object:", error);
-          console.error("Error response:", error.response);
-          console.error("Error fetching contact info:", error.response?.data || error.message);
+        .catch(() => {
           setError("명함 정보를 불러오는데 실패했습니다.");
         });
     }
-  }, [userId]);
+  }, [userId, isAuthenticated]);
 
   useEffect(() => {
     // 게시물 피드 불러오기
@@ -132,17 +127,29 @@ const MyPage: React.FC = () => {
   };
 
   const handleAccountDeletion = (password: string | null) => {
+    if (!password) {
+      alert("비밀번호를 입력해주세요.");
+      return;
+    }
+  
     if (window.confirm("정말로 탈퇴하시겠습니까?")) {
       axiosInstance
         .delete("/users", {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`, // JWT 토큰 헤더 추가
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           data: { password }, // 사용자가 입력한 비밀번호 포함
         })
         .then((response) => {
           alert(response.data.message || "회원 탈퇴가 완료되었습니다.");
-          handleLogout(); // 탈퇴 성공 시 로그아웃 처리
+          
+          // 모든 토큰 삭제
+          localStorage.removeItem("token");
+          localStorage.removeItem("refreshToken");
+  
+          // Redux 상태 초기화 및 로그인 페이지로 이동
+          dispatch(logout());
+          navigate("/login");
         })
         .catch((error) => {
           if (error.response) {
@@ -155,28 +162,27 @@ const MyPage: React.FC = () => {
   };
   
   
+  
 
   const handleLogout = async () => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      
+      const refreshToken = localStorage.getItem("refreshToken");
+  
       if (refreshToken) {
-        // 백엔드에 로그아웃 요청 보내기
-        await axiosInstance.post('/auth/logout', {
-          refreshToken
-        });
+        // 백엔드로 로그아웃 요청
+        await axiosInstance.post("/auth/logout", { refreshToken });
       }
-      
-      // 로그아웃 성공 시 프론트엔드 상태 정리
-      dispatch(logout());
-      navigate('/login');
     } catch (error) {
-      console.error('Logout failed:', error);
-      // 에러가 발생하더라도 프론트엔드에서는 로그아웃 처리
+      console.error("Logout failed:", error);
+    } finally {
+      // 모든 토큰 삭제 및 상태 초기화
+      localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
       dispatch(logout());
-      navigate('/login');
+      navigate("/login");
     }
   };
+  
 
   const handleProfileUpdate = (updatedInfo: Partial<ContactInfo>) => {
     axiosInstance
