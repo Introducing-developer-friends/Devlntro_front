@@ -16,7 +16,7 @@ const SignUpPage: React.FC = () => {
   const [idAvailable, setIdAvailable] = useState<boolean | null>(null);
   const [formError, setFormError] = useState("");
 
-  const navigate = useNavigate(); // Create a history instance
+  const navigate = useNavigate(); // Create a history instanc
 
   const checkIdDuplication = async () => {
     try {
